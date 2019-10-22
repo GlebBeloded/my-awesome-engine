@@ -2,6 +2,7 @@ image: "svinonek/debian"
 
 hello-lib:
   script:
+    - cd hello-lib
     - mkdir build
     - cd build
     - cmake ..
