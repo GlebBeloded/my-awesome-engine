@@ -2,8 +2,8 @@ image: "svinonek/debian"
 
 hello-lib:
   script:
-    mkdir build
-    cd build
-    cmake ..
-    cmake --build ./
-    python3 ../tests.py
+    - mkdir build
+    - cd build
+    - cmake ..
+    - cmake --build ./
+    - python3 ../tests.py
