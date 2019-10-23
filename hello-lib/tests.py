@@ -6,10 +6,10 @@ def output_check(string):
     output = subprocess.check_output(string)
     return output == bytes("Hello, " + username + "\n", sys.stdout.encoding)
 
-module_root = os.path.abspath(sys.argv[0])[:-len("tests.py")]
+module_root = os.path.abspath(sys.argv[0])[:-len("hello-lib/tests.py")]
 
-files_list = ["build/bin/hello-bin-static","build/bin/hello-bin-dynamic",
-                "build/lib/libhello-lib-dynamic.so","build/lib/libhello-lib-static.a"]
+files_list = ["build/hello-lib/bin/hello-bin-static","build/hello-lib/bin/hello-bin-dynamic",
+                "build/hello-lib/lib/libhello-lib-dynamic.so","build/hello-lib/lib/libhello-lib-static.a"]
 
 for file_path in files_list:
     if os.path.isfile(module_root + file_path) is not True:

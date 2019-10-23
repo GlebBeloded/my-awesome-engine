@@ -1,10 +1,16 @@
-image: "svinonek/debian"
+image: "svinonek/debian-cpp"
 
-hello-lib:
+build:
   script:
-    - cd hello-lib
     - mkdir build
     - cd build
-    - cmake ..
-    - cmake --build ./
+    - cmake -DCMAKE_BUILD_TYPE=Debug ..
+    - cmake  --build ./
+
+tests:
+  script:
+    - mkdir build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=Debug ..
+    - cmake  --build ./
     - python3 ../tests.py
