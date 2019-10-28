@@ -11,7 +11,11 @@ for file in os.listdir(project_root):
 modules.remove(project_root+"cmake")
 modules.remove(project_root+"build")
 modules.remove(project_root+".git")
-modules.remove(project_root+".vscode")
+try:
+    modules.remove(project_root+".vscode")
+except:
+    print(".vscode folder not found")
+
 
 
 for module in modules:
