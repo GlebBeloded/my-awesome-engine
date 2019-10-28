@@ -6,7 +6,7 @@ bool greetings() {
     string_view output_phrase("Hello, ");
     string_view user = getenv("USER");
 
-    if (user == nullptr)
+    if (user.empty())
         user = "User";
 
     cout << output_phrase << user << endl;
