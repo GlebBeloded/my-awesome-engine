@@ -1,5 +1,9 @@
 image: "svinonek/debian-cpp"
 
+stages:
+  - build
+  - tests
+
 build:
   script:
     - mkdir build
@@ -9,8 +13,4 @@ build:
 
 tests:
   script:
-    - mkdir build
-    - cd build
-    - cmake -DCMAKE_BUILD_TYPE=Debug ..
-    - cmake  --build ./
     - python3 ../tests.py

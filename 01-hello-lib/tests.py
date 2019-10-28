@@ -27,7 +27,7 @@ if bytes("not a dynamic executable",sys.stdout.encoding) not in static_check.std
     exit(os.EX_OSERR)
 
 dynamic_check = subprocess.run(["ldd", module_root+files_list[1]],stdout=subprocess.PIPE)
-if bytes("libhello-lib-dynamic.so",sys.stdout.encoding) not in dynamic_check.stdout:
+if bytes("libhello-dynamic.so",sys.stdout.encoding) not in dynamic_check.stdout:
     exit(os.EX_OSERR)
 
 exit(os.EX_OK)
