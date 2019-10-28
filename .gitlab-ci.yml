@@ -5,6 +5,7 @@ stages:
   - tests
 
 build:
+  stage: build
   script:
     - mkdir build
     - cd build
@@ -12,5 +13,6 @@ build:
     - cmake  --build ./
 
 tests:
+  stage: tests
   script:
     - python3 ../tests.py
