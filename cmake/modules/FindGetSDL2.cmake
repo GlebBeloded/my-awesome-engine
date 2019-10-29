@@ -19,7 +19,7 @@ if(UNIX)
         execute_process(
             COMMAND apt
             install 
-            lib-sdl2-dev
+            libsdl2-dev
             --assume-yes)
     elseif({PCK_MAN} STREQUAL pacman)
         execute_process(
