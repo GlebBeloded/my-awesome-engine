@@ -19,7 +19,7 @@ if(UNIX)
         execute_process(
             COMMAND apt
             install 
-            sdl2)
+            sdl2-dev)
     elseif({PCK_MAN} STREQUAL pacman)
         execute_process(
             COMMAND pacman
