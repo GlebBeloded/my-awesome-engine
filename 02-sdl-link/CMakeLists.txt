@@ -6,7 +6,7 @@ add_executable(sdl-link-static src/main.cpp)
 target_compile_features(sdl-link-static PUBLIC cxx_std_17)
 
 
-#find_package(sdl2)
+find_package(sdl2)
 
 if(NOT sdl2_FOUND)
     find_package(GetSDL2)
