@@ -15,4 +15,8 @@ build:
 tests:
   stage: tests
   script:
-    - python3 tests.py
+    - mkdir build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=Debug ..
+    - cmake  --build ./
+    - python3 ../tests.py
