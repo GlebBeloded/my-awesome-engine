@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15.4)
 
-project(sdl-link C CXX)
+project(sdl-link CXX)
 
 add_executable(sdl-link-dynamic src/main.cpp)
 list(APPEND target_list sdl-link-dynamic)
