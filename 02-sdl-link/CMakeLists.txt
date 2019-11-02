@@ -28,7 +28,7 @@ if(sdl2d_lib)
     target_link_libraries(sdl-link-static-debug 
     ${sdl2d_lib}
     -L/usr/local/lib
-    -Ldir/usr/lib/x86_64-linux-gnu 
+    -L/usr/lib/x86_64-linux-gnu 
     -Wl,-rpath,/usr/local/lib 
     -Wl,--enable-new-dtags 
     -lglib-2.0 
