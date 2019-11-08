@@ -10,7 +10,7 @@ target_compile_features(engine PUBLIC cxx_std_17)
 
 find_library(sdl2d_lib libSDL2d.a)
 
-if(sdl2d_lib)
+if(sdl2d_lib AND CMAKE_BUILD_TYPE STREQUAL Debug)
     message(STATUS "Linking with DEBUG SDL2")
     get_filename_component(debug_path ${sdl2d_lib} DIRECTORY)
     target_include_directories(engine PRIVATE ${debug_path}/../include/SDL2)
