@@ -7,10 +7,11 @@ list(APPEND target_list sdl-link-dynamic)
 target_compile_features(sdl-link-dynamic PUBLIC cxx_std_17)
 
 
-find_package(sdl2)
-
-if(NOT sdl2_FOUND)
-    find_package(GetSDL2)
+if(NOT sd2_FOUND)
+    find_package(sdl2)
+    if(NOT sdl2_FOUND)
+        find_package(GetSDL2)
+    endif()
 endif()
 
 target_include_directories(sdl-link-dynamic PRIVATE ${SDL2_INCLUDE_DIRS})
