@@ -6,7 +6,7 @@
 #include <memory>
 #include <string_view>
 
-int main(int /*argc*/, char* /*argv*/ []) {
+int main(int /*argc*/, char* /*argv*/[]) {
     std::unique_ptr<custom_engine::engine> engine(
         custom_engine::new_sdl_engine());
 
