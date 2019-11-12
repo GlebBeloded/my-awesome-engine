@@ -22,18 +22,21 @@ struct color {
     constexpr color()
         : r{ 0 }
         , g{ 0 }
-        , b{ 0 } {
-        if (r != std::clamp(static_cast<int>(r), 0, 255) ||
-            g != std::clamp(static_cast<int>(g), 0, 255) ||
-            b != std::clamp(static_cast<int>(b), 0, 255))
-            throw std::logic_error("Invalid RGB values");
-    }
+        , b{ 0 } {}
 };
 
-struct pixel {
-    int32_t x = 0;
-    int32_t y = 0;
-};
+struct point {
+    int32_t x;
+    int32_t y;
+
+    constexpr point(int _x, int _y)
+        : x{ _x }
+        , y{ _y } {}
+
+    constexpr point()
+        : x{ 0 }
+        , y{ 0 } {}
+}; // namespace draw_utils
 
 template <typename T>
 inline T delta(T w1, T w2) {

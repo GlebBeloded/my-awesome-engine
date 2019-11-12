@@ -2,6 +2,10 @@
 
 using namespace ppm;
 
+color& image::get_pixel(const point& pos) {
+    return this->at(get_x_size() * pos.y + pos.x);
+}
+
 std::ofstream image::write_image(const std::string& path) {
     std::ofstream output;
 
@@ -14,8 +18,9 @@ std::ofstream image::write_image(const std::string& path) {
     output << "P6" << ' ' << this->x_size << ' ' << this->y_size << ' ' << 255
            << '\n';
 
-    output.write(reinterpret_cast<const char*>(this->data()),
-                 std::streamsize{ this->size() * sizeof(color) });
+    std::streamsize buf_size = static_cast<long>(this->size() * sizeof(color));
+
+    output.write(reinterpret_cast<const char*>(this->data()), buf_size);
 
     return output;
 }

@@ -130,7 +130,7 @@ sdl_engine::sdl_engine() {
     already_exist = true;
 }
 
-sdl_engine::~sdl_engine() {
+sdl_engine::~sdl_engine() noexcept(false) {
     if (already_exist == false) {
         throw std::runtime_error("engine not created");
     }
