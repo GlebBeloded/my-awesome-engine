@@ -14,7 +14,7 @@ void bresenham::draw_low(const draw_utils::point& a, const draw_utils::point& b,
     int y = a.y;
 
     for (int x = a.x; x <= b.x; ++x) {
-        img.get_pixel({ x, y }) = color;
+        img.at({ x, y }) = color;
         if (D > 0) {
             y += yi;
             D -= 2 * dx;
@@ -37,7 +37,7 @@ void bresenham::draw_high(const draw_utils::point& a,
     int D = 2 * dx - dy;
     int x = a.x;
     for (int y = a.y; y <= b.y; ++y) {
-        img.get_pixel({ x, y }) = color;
+        img.at({ x, y }) = color;
         if (D > 0) {
             x = x + xi;
             D = D - 2 * dy;

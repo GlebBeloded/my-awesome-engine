@@ -24,7 +24,7 @@ public:
         this->resize(x * y);
     }
 
-    color& get_pixel(const point& pos);
+    color& at(const point& pos);
 
     std::ofstream write_image(const std::string& path);
     std::ifstream load_image(const std::string& path);

@@ -38,7 +38,7 @@ void renderer::draw_low(const draw_utils::point& a, const draw_utils::point& b,
     int y = a.y;
 
     for (int x = a.x; x <= b.x; ++x) {
-        this->get_pixel({ x, y }) = col;
+        this->at({ x, y }) = col;
         if (D > 0) {
             y += yi;
             D -= 2 * dx;
@@ -61,7 +61,7 @@ void renderer::draw_high(const draw_utils::point& a, const draw_utils::point& b,
     int D = 2 * dx - dy;
     int x = a.x;
     for (int y = a.y; y <= b.y; ++y) {
-        this->get_pixel({ x, y }) = col;
+        this->at({ x, y }) = col;
         if (D > 0) {
             x = x + xi;
             D = D - 2 * dy;

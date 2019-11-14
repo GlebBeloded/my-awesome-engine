@@ -2,8 +2,8 @@
 
 using namespace ppm;
 
-color& image::get_pixel(const point& pos) {
-    return this->at(get_x_size() * pos.y + pos.x);
+color& image::at(const point& pos) {
+    return std::vector<color>::at(get_x_size() * pos.y + pos.x);
 }
 
 std::ofstream image::write_image(const std::string& path) {

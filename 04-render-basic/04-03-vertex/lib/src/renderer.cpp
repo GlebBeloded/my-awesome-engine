@@ -75,16 +75,16 @@ std::vector<point> renderer::get_line_high(const draw_utils::point& a,
 }
 
 void renderer::draw(const std::vector<point>&  vertex,
-                    const std::vector<size_t>& indexes, color col) {
+                    const std::vector<size_t>& indicies, color col) {
 
     std::vector<point> pixels;
 
-    for (auto i = 0; i < indexes.size() - 1; i++) {
-        auto x = get_line(vertex.at(indexes[i]), vertex.at(indexes[i + 1]));
+    for (auto i = 0; i < indicies.size() - 1; i++) {
+        auto x = get_line(vertex.at(indicies[i]), vertex.at(indicies[i + 1]));
         pixels.insert(pixels.end(), x.begin(), x.end());
     }
     for (auto position : pixels)
-        get_pixel(position) = col;
+        at(position) = col;
 }
 
 void renderer::clear(color col) {

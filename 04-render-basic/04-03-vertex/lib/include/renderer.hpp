@@ -16,7 +16,7 @@ public:
         : ppm::image(x, y) {}
 
     void draw(const std::vector<point>&  vertex,
-              const std::vector<size_t>& indexes, color col);
+              const std::vector<size_t>& indicies, color col);
     void clear(color col = { 0, 0, 0 });
 };
 } // namespace triangle
