@@ -1,3 +1,5 @@
 add_subdirectory(04-01-lines)
 add_subdirectory(04-02-triangle)
 add_subdirectory(04-03-vertex)
+add_subdirectory(04-04-interpolated)
+add_subdirectory(04-05-sdl-render)

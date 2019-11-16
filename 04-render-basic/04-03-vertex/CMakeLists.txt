@@ -3,8 +3,6 @@ project(triangle-vertex-render C CXX)
 
 
 add_library(${PROJECT_NAME} SHARED 
-                            ${CMAKE_CURRENT_LIST_DIR}/../04-01-lines/lib/src/ppm.cpp 
-                            #${CMAKE_CURRENT_LIST_DIR}/../04-01-lines/lib/src/bresenham.cpp 
                             ${CMAKE_CURRENT_LIST_DIR}/lib/src/renderer.cpp
                             )
 target_include_directories(${PROJECT_NAME}  PRIVATE 
