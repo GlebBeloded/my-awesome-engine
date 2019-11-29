@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14.5)
 
-project(engine CXX)
+project(engine-main C CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules
                       ${CMAKE_MODULE_PATH})

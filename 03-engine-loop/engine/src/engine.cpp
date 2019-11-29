@@ -82,7 +82,7 @@ static bool check_input(const SDL_Event& e, const binding*& result) {
 class sdl_engine final : public engine {
 public:
     sdl_engine();
-    virtual ~sdl_engine();
+    virtual ~sdl_engine() override;
     bool read_input(event& e) final;
 };
 
@@ -130,7 +130,7 @@ sdl_engine::sdl_engine() {
     already_exist = true;
 }
 
-sdl_engine::~sdl_engine() noexcept(false) {
+sdl_engine::~sdl_engine() {
     if (already_exist == false) {
         throw std::runtime_error("engine not created");
     }

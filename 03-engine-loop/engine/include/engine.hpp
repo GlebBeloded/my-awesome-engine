@@ -23,6 +23,7 @@ public:
     /// pool event from input queue
     /// return true if more events in queue
     virtual bool read_input(event& e) = 0;
+    virtual ~engine(){};
 };
 
 engine* new_sdl_engine();
