@@ -32,10 +32,8 @@ int main(int /*argc*/, char* /*argv*/[]) {
         file.open("/home/gleb/projects/my-awesome-engine/build/04-opengl-basic/"
                   "vertexes.txt");
 
-        engine->render_triangle(tr);
         file >> tr;
         engine->render_triangle(tr);
-
         engine->swap_buffers();
     }
 

@@ -60,23 +60,21 @@ constexpr static std::array<std::string_view, 17> event_names = {
 
 namespace default_shaders {
 
-std::string_view vertex = R"(
+std::string_view vertex   = R"(
                                     attribute vec3 a_position;
-                                    attribute vec3 a_color;
-                                    varying vec3 out_color;
+                                    varying vec4 v_position;
 
                                     void main()
                                     {
-                                        gl_Position = (a_position, 1.0);
+                                        v_position = vec4(a_position, 1.0);
+                                        gl_Position = v_position;
                                     }
                                     )";
-
 std::string_view fragment = R"(
                       precision mediump float; 
-                      varying vec3 out_color;
                       void main()
                       {
-                        gl_FragColor = vec4(0.3,0.4,0.5,1.0);
+                        gl_FragColor = vec4(0.0,1.0,1.0,1.0);
                       }
                       )";
 } // namespace default_shaders
@@ -262,7 +260,6 @@ sdl_engine::sdl_engine() {
 
     // bind attribute location
     glBindAttribLocation(program_id_, 0, "a_position");
-    glBindAttribLocation(program_id_, 1, "a_color");
     gl_error_check();
     // link program after binding attribute locations
     glLinkProgram(program_id_);
@@ -286,6 +283,8 @@ sdl_engine::sdl_engine() {
         if (err != GL_NO_ERROR)
             throw std::logic_error("OpenGL failed to load");
     }
+
+    glUseProgram(program_id_);
 
     if (already_exist) {
         throw std::runtime_error("engine already exist");
@@ -337,7 +336,8 @@ void sdl_engine::render_triangle(const triangle& t) {
     GLintptr position_attr_offset = 0;
 
     gl_error_check();
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), &t);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex) / 2,
+                          &t.v[0]);
     gl_error_check();
     glEnableVertexAttribArray(0);
     gl_error_check();
