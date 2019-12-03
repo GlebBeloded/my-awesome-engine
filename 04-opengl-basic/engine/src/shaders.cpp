@@ -1,4 +1,3 @@
-#include "shaders.hpp"
 
 #include <algorithm>
 #include <array>
@@ -8,6 +7,8 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+
+#include "shaders.hpp"
 
 GLuint comiple_vertex_shader(std::string_view shader) {
     GLuint vert_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -36,7 +37,7 @@ GLuint comiple_fragment_shader(std::string_view shader) {
     glCompileShader(fragment_shader);
     gl_error_check();
 
-    // check_compile_status(fragment_shader, "fragment");
+    check_compile_status(fragment_shader, "fragment");
 
     return fragment_shader;
 }
@@ -59,8 +60,6 @@ void check_compile_status(GLuint shader, const char* type) {
         std::string error_message{ "Error compiling " };
         error_message += type;
         error_message += " shader \n";
-
-        // error_message += info_chars.data();
 
         throw std::runtime_error(error_message);
     }

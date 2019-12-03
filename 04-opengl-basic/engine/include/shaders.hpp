@@ -1,6 +1,6 @@
 #pragma once
 
-#include "openGL.hpp"
+#include "glad.h"
 #include <iosfwd>
 #include <string>
 #include <string_view>

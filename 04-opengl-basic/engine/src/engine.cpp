@@ -10,36 +10,8 @@
 #include <stdexcept>
 #include <vector>
 
+#include "glad.h"
 #include <SDL.h>
-#include <SDL_opengl.h>
-#include <SDL_opengl_glext.h>
-// we have to load all extension GL function pointers
-// dynamically from opengl library
-// so first declare function pointers for all we need
-PFNGLCREATESHADERPROC            glCreateShader            = nullptr;
-PFNGLSHADERSOURCEPROC            glShaderSource            = nullptr;
-PFNGLCOMPILESHADERPROC           glCompileShader           = nullptr;
-PFNGLGETSHADERIVPROC             glGetShaderiv             = nullptr;
-PFNGLGETSHADERINFOLOGPROC        glGetShaderInfoLog        = nullptr;
-PFNGLDELETESHADERPROC            glDeleteShader            = nullptr;
-PFNGLCREATEPROGRAMPROC           glCreateProgram           = nullptr;
-PFNGLATTACHSHADERPROC            glAttachShader            = nullptr;
-PFNGLBINDATTRIBLOCATIONPROC      glBindAttribLocation      = nullptr;
-PFNGLLINKPROGRAMPROC             glLinkProgram             = nullptr;
-PFNGLGETPROGRAMIVPROC            glGetProgramiv            = nullptr;
-PFNGLGETPROGRAMINFOLOGPROC       glGetProgramInfoLog       = nullptr;
-PFNGLDELETEPROGRAMPROC           glDeleteProgram           = nullptr;
-PFNGLUSEPROGRAMPROC              glUseProgram              = nullptr;
-PFNGLVERTEXATTRIBPOINTERPROC     glVertexAttribPointer     = nullptr;
-PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = nullptr;
-PFNGLVALIDATEPROGRAMPROC         glValidateProgram         = nullptr;
-// RENDER_DOC//////////////////////
-PFNGLBINDBUFFERPROC      glBindBuffer      = nullptr;
-PFNGLGENBUFFERSPROC      glGenBuffers      = nullptr;
-PFNGLGENVERTEXARRAYSPROC glGenVertexArrays = nullptr;
-PFNGLBINDVERTEXARRAYPROC glBindVertexArray = nullptr;
-PFNGLBUFFERDATAPROC      glBufferData      = nullptr;
-// RENDER_DOC//////////////////////
 
 template <typename T>
 static void load_gl_func(const char* func_name, T& result) {
@@ -88,28 +60,25 @@ constexpr static std::array<std::string_view, 17> event_names = {
 
 namespace default_shaders {
 
-std::string_view vertex = R"(#version 330 core
-                                    layout (location = 0) in vec3 a_position;
-                                    layout (location = 1) in vec3 a_color;
-                                    out vec4 v_position;
-                                    out vec3 v_color;
+std::string_view vertex = R"(
+                                    attribute vec3 a_position;
+                                    attribute vec3 a_color;
+                                    varying vec3 out_color;
+
                                     void main()
                                     {
-                                        v_position = vec4(a_position, 1.0);
-                                        v_color = a_color;
-                                        gl_Position = v_position;
+                                        gl_Position = (a_position, 1.0);
                                     }
                                     )";
 
-std::string_view fragment = R"(#version 330 core
-                                      in vec4 v_position;
-                                      in vec3 v_color;
-                                      out vec4 FragColor;
-                                      void main()
-                                      {
-                                          FragColor = vec4(v_color, 1.0);
-                                      }
-                                      )";
+std::string_view fragment = R"(
+                      precision mediump float; 
+                      varying vec3 out_color;
+                      void main()
+                      {
+                        gl_FragColor = vec4(0.3,0.4,0.5,1.0);
+                      }
+                      )";
 } // namespace default_shaders
 
 std::ostream& operator<<(std::ostream& stream, const event e) {
@@ -242,25 +211,20 @@ sdl_engine::sdl_engine() {
         throw std::runtime_error("Failed to create a window");
     }
 
-    int gl_major_ver = 3;
-    int gl_minor_ver = 3;
+    int gl_major_ver = 2;
+    int gl_minor_ver = 1;
 
-    SDL_GL_SetAttribute(
-        SDL_GL_CONTEXT_PROFILE_MASK,
-        SDL_GL_CONTEXT_PROFILE_CORE); // Set opengl ES(embedded version,i.e.
-                                      // works everywhere)
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,
-                        gl_major_ver); // set major version
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
-                        gl_minor_ver); // set minor version
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, gl_major_ver);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, gl_minor_ver);
 
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
-
     if (gl_context == nullptr) {
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                             SDL_GL_CONTEXT_PROFILE_CORE);
         gl_context = SDL_GL_CreateContext(window);
     }
+
     assert(gl_context != nullptr);
 
     int result =
@@ -270,47 +234,17 @@ sdl_engine::sdl_engine() {
     result = SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &gl_minor_ver);
     assert(result == 0);
 
-    if (gl_major_ver < 3) {
+    if (gl_major_ver <= 2 && gl_minor_ver < 1) {
         std::clog << "current context opengl version: " << gl_major_ver << '.'
                   << gl_minor_ver << '\n'
-                  << "need openg version at least: 2.1\n"
+                  << "need opengl version at least: 2.1\n"
                   << std::flush;
         throw std::runtime_error("opengl version too low");
     }
 
-    load_gl_func("glCreateShader", glCreateShader);
-    load_gl_func("glShaderSource", glShaderSource);
-    load_gl_func("glCompileShader", glCompileShader);
-    load_gl_func("glGetShaderiv", glGetShaderiv);
-    load_gl_func("glGetShaderInfoLog", glGetShaderInfoLog);
-    load_gl_func("glDeleteShader", glDeleteShader);
-    load_gl_func("glCreateProgram", glCreateProgram);
-    load_gl_func("glAttachShader", glAttachShader);
-    load_gl_func("glBindAttribLocation", glBindAttribLocation);
-    load_gl_func("glLinkProgram", glLinkProgram);
-    load_gl_func("glGetProgramiv", glGetProgramiv);
-    load_gl_func("glGetProgramInfoLog", glGetProgramInfoLog);
-    load_gl_func("glDeleteProgram", glDeleteProgram);
-    load_gl_func("glUseProgram", glUseProgram);
-    load_gl_func("glVertexAttribPointer", glVertexAttribPointer);
-    load_gl_func("glEnableVertexAttribArray", glEnableVertexAttribArray);
-    load_gl_func("glValidateProgram", glValidateProgram);
-    load_gl_func("glBindBuffer", glBindBuffer);           // for RENDER_DOC
-    load_gl_func("glGenBuffers", glGenBuffers);           // for RENDER_DOC
-    load_gl_func("glGenVertexArrays", glGenVertexArrays); // for RENDER_DOC
-    load_gl_func("glBindVertexArray", glBindVertexArray); // for RENDER_DOC
-    load_gl_func("glBufferData", glBufferData);           // for RENDER_DOC
-
-    GLuint vertex_buffer = 0;
-    glGenBuffers(1, &vertex_buffer);
-    gl_error_check();
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    gl_error_check();
-    GLuint vertex_array_object = 0;
-    glGenVertexArrays(1, &vertex_array_object);
-    gl_error_check();
-    glBindVertexArray(vertex_array_object);
-    gl_error_check();
+    if (gladLoadGLES2Loader(SDL_GL_GetProcAddress) == 0) {
+        throw std::logic_error("error: failed to initialize glad");
+    }
 
     auto vert_shader     = comiple_vertex_shader(default_shaders::vertex);
     auto fragment_shader = comiple_fragment_shader(default_shaders::fragment);
@@ -328,6 +262,7 @@ sdl_engine::sdl_engine() {
 
     // bind attribute location
     glBindAttribLocation(program_id_, 0, "a_position");
+    glBindAttribLocation(program_id_, 1, "a_color");
     gl_error_check();
     // link program after binding attribute locations
     glLinkProgram(program_id_);
@@ -357,7 +292,8 @@ sdl_engine::sdl_engine() {
     }
     already_exist = true;
 
-    glUseProgram(program_id_);
+    glValidateProgram(program_id_);
+    gl_error_check();
 }
 
 sdl_engine::~sdl_engine() {
@@ -398,27 +334,17 @@ bool sdl_engine::read_input(event& e) {
 }
 
 void sdl_engine::render_triangle(const triangle& t) {
-    // RENDER DOC addition ////////////////////
-    glBufferData(GL_ARRAY_BUFFER, sizeof(t), &t, GL_STATIC_DRAW);
-    gl_error_check();
-    glEnableVertexAttribArray(0);
-
     GLintptr position_attr_offset = 0;
 
     gl_error_check();
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                          reinterpret_cast<void*>(position_attr_offset));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), &t);
     gl_error_check();
-    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(0);
     gl_error_check();
 
-    GLintptr color_attr_offset = sizeof(float) * 3;
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex),
-                          reinterpret_cast<void*>(color_attr_offset));
-    gl_error_check();
     glValidateProgram(program_id_);
     gl_error_check();
+
     // Check the validate status
     GLint validate_status = 0;
     glGetProgramiv(program_id_, GL_VALIDATE_STATUS, &validate_status);

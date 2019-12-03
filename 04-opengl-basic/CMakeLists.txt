@@ -1,11 +1,13 @@
+add_library(openGL SHARED ${CMAKE_CURRENT_LIST_DIR}/openGL/src/glad.c)
+
+target_include_directories(openGL PRIVATE ${CMAKE_CURRENT_LIST_DIR}/openGL/include/)
+target_compile_features(openGL PUBLIC cxx_std_17)
+
 add_library(engine SHARED ${CMAKE_CURRENT_LIST_DIR}/engine/src/engine.cpp
-                          ${CMAKE_CURRENT_LIST_DIR}/engine/include/engine.hpp
-                          ${CMAKE_CURRENT_LIST_DIR}/engine/include/openGL.hpp    
-                          ${CMAKE_CURRENT_LIST_DIR}/engine/src/shaders.cpp
-                                                                            )
-
-
-target_include_directories(engine PRIVATE ${CMAKE_CURRENT_LIST_DIR}/engine/include/)
+                          ${CMAKE_CURRENT_LIST_DIR}/engine/src/shaders.cpp)
+                          
+target_include_directories(engine PRIVATE ${CMAKE_CURRENT_LIST_DIR}/engine/include/
+                                          ${CMAKE_CURRENT_LIST_DIR}/openGL/include)
 
 target_compile_features(engine PUBLIC cxx_std_17)
 
@@ -16,7 +18,11 @@ endif()
 
 target_include_directories(engine PRIVATE ${SDL2_INCLUDE_DIRS})
 
-target_link_libraries(engine PRIVATE ${SDL2_LIBRARIES} -lGL)
+
+
+target_link_libraries(engine PRIVATE ${SDL2_LIBRARIES})
+target_link_libraries(engine PRIVATE openGL -lGL)
+
 
 
 add_executable(game ${CMAKE_CURRENT_LIST_DIR}/game/main.cpp)

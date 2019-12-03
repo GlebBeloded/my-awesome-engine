@@ -11,7 +11,8 @@ int main(int /*argc*/, char* /*argv*/[]) {
     std::unique_ptr<eng::engine> engine(eng::new_sdl_engine());
 
     // figure out why you need two loops
-    bool continue_loop = true;
+    bool          continue_loop = true;
+    eng::triangle tr;
     while (continue_loop) {
         eng::event event;
 
@@ -26,12 +27,12 @@ int main(int /*argc*/, char* /*argv*/[]) {
             }
         }
         std::ifstream file;
-        file.open("/home/gleb/projects/my-awesome-engine/build/04-opengl-basic/"
-                  "vertexes.txt");
         file.exceptions(std::ios_base::failbit);
 
-        eng::triangle tr;
+        file.open("/home/gleb/projects/my-awesome-engine/build/04-opengl-basic/"
+                  "vertexes.txt");
 
+        engine->render_triangle(tr);
         file >> tr;
         engine->render_triangle(tr);
 
