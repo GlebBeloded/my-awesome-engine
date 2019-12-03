@@ -62,19 +62,23 @@ namespace default_shaders {
 
 std::string_view vertex   = R"(
                                     attribute vec3 a_position;
+                                    attribute vec3 a_color;
                                     varying vec4 v_position;
+                                    varying vec3 v_color;
 
                                     void main()
-                                    {
+                                    {   
+                                        v_color = a_color;
                                         v_position = vec4(a_position, 1.0);
                                         gl_Position = v_position;
                                     }
                                     )";
 std::string_view fragment = R"(
-                      precision mediump float; 
+                    varying vec3 v_color;
+
                       void main()
                       {
-                        gl_FragColor = vec4(0.0,1.0,1.0,1.0);
+                        gl_FragColor = vec4(v_color,1.0);
                       }
                       )";
 } // namespace default_shaders
@@ -260,6 +264,7 @@ sdl_engine::sdl_engine() {
 
     // bind attribute location
     glBindAttribLocation(program_id_, 0, "a_position");
+    glBindAttribLocation(program_id_, 1, "a_color");
     gl_error_check();
     // link program after binding attribute locations
     glLinkProgram(program_id_);
@@ -335,11 +340,17 @@ bool sdl_engine::read_input(event& e) {
 void sdl_engine::render_triangle(const triangle& t) {
     GLintptr position_attr_offset = 0;
 
-    gl_error_check();
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex) / 2,
-                          &t.v[0]);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), &t.v[0]);
     gl_error_check();
     glEnableVertexAttribArray(0);
+    gl_error_check();
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), &t.v[0].r);
+
+    gl_error_check();
+
+    glEnableVertexAttribArray(1);
+
     gl_error_check();
 
     glValidateProgram(program_id_);
