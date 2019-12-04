@@ -1,3 +1,6 @@
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include "engine.hpp"
 #include "shaders.hpp"
 
@@ -50,6 +53,11 @@ void gl_error_check() {
 
 namespace eng {
 
+template <typename T>
+T lerp(T a, T b, float t) {
+    return a + t * (b - a);
+}
+
 static bool already_exist = false;
 
 constexpr static std::array<std::string_view, 17> event_names = {
@@ -63,22 +71,27 @@ namespace default_shaders {
 std::string_view vertex   = R"(
                                     attribute vec3 a_position;
                                     attribute vec3 a_color;
+                                    attribute vec2 a_tex_coord;
                                     varying vec4 v_position;
                                     varying vec3 v_color;
+                                    varying vec2 tex_coord;
 
                                     void main()
                                     {   
                                         v_color = a_color;
                                         v_position = vec4(a_position, 1.0);
                                         gl_Position = v_position;
+                                        tex_coord = a_tex_coord;
                                     }
                                     )";
 std::string_view fragment = R"(
                     varying vec3 v_color;
-
+                    uniform sampler2D s_texture;
+                    varying vec2 tex_coord;
+                    
                       void main()
                       {
-                        gl_FragColor = vec4(v_color,1.0);
+                        gl_FragColor = texture2D(s_texture, tex_coord);
                       }
                       )";
 } // namespace default_shaders
@@ -112,6 +125,9 @@ std::istream& operator>>(std::istream& is, vertex& v) {
     is >> v.r;
     is >> v.g;
     is >> v.b;
+
+    is >> v.tx;
+    is >> v.ty;
     return is;
 }
 
@@ -164,9 +180,12 @@ class sdl_engine final : public engine {
 public:
     sdl_engine();
     virtual ~sdl_engine();
-    bool read_input(event& e) final;
-    void render_triangle(const triangle& t) override;
-    void swap_buffers() override;
+    bool  read_input(event& e) final;
+    void  render_triangle(const triangle& t) override;
+    void  swap_buffers() override;
+    float time_from_init() override;
+    uint  load_texture(std::string_view path, int width, int height,
+                       int nrChannels) override;
 
 private:
     SDL_GLContext gl_context  = nullptr;
@@ -203,7 +222,7 @@ sdl_engine::sdl_engine() {
     }
 
     window = SDL_CreateWindow("OpenGL", SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED, 640, 480,
+                              SDL_WINDOWPOS_CENTERED, 780, 720,
                               SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 
     if (window == nullptr) {
@@ -265,6 +284,7 @@ sdl_engine::sdl_engine() {
     // bind attribute location
     glBindAttribLocation(program_id_, 0, "a_position");
     glBindAttribLocation(program_id_, 1, "a_color");
+    glBindAttribLocation(program_id_, 2, "a_tex_coord");
     gl_error_check();
     // link program after binding attribute locations
     glLinkProgram(program_id_);
@@ -297,6 +317,10 @@ sdl_engine::sdl_engine() {
     already_exist = true;
 
     glValidateProgram(program_id_);
+    gl_error_check();
+
+    stbi_set_flip_vertically_on_load(true);
+    glEnable(GL_BLEND);
     gl_error_check();
 }
 
@@ -342,18 +366,23 @@ void sdl_engine::render_triangle(const triangle& t) {
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), &t.v[0]);
     gl_error_check();
+
     glEnableVertexAttribArray(0);
     gl_error_check();
 
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), &t.v[0].r);
-
     gl_error_check();
 
     glEnableVertexAttribArray(1);
-
     gl_error_check();
 
     glValidateProgram(program_id_);
+    gl_error_check();
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), &t.v[0].tx);
+    gl_error_check();
+
+    glEnableVertexAttribArray(2);
     gl_error_check();
 
     // Check the validate status
@@ -383,4 +412,55 @@ void sdl_engine::swap_buffers() {
     gl_error_check();
 }
 
+vertex blend(const vertex& a, const vertex& b, const float t) {
+    vertex r;
+    r.x  = lerp(a.x, b.x, t);
+    r.y  = lerp(a.y, b.y, t);
+    r.z  = lerp(a.z, b.z, t);
+    r.r  = lerp(a.r, b.r, t);
+    r.g  = lerp(a.g, b.g, t);
+    r.b  = lerp(a.b, b.b, t);
+    r.tx = lerp(a.tx, b.tx, t);
+    r.ty = lerp(a.ty, b.ty, t);
+
+    return r;
+}
+
+triangle blend(const triangle& tl, const triangle& tr, const float a) {
+    triangle r;
+    r.v[0] = blend(tl.v[0], tr.v[0], a);
+    r.v[1] = blend(tl.v[1], tr.v[1], a);
+    r.v[2] = blend(tl.v[2], tr.v[2], a);
+    return r;
+}
+
+float sdl_engine::time_from_init() {
+    std::uint32_t ms_from_library_initialization = SDL_GetTicks();
+    float         seconds = ms_from_library_initialization * 0.001f;
+    return seconds;
+}
+
+uint sdl_engine::load_texture(std::string_view path, int width, int height,
+                              int nrChannels) {
+    unsigned char* data =
+        stbi_load(path.data(), &width, &height, &nrChannels, 0);
+
+    GLuint texture;
+    glGenTextures(1, &texture);
+    gl_error_check();
+
+    glBindTexture(GL_TEXTURE_2D, texture);
+    gl_error_check();
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+                 GL_UNSIGNED_BYTE, data);
+    gl_error_check();
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+    gl_error_check();
+
+    stbi_image_free(data);
+
+    return texture;
+}
 } // namespace eng

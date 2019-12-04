@@ -1,6 +1,7 @@
 #include "engine.hpp"
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -9,7 +10,9 @@
 
 int main(int /*argc*/, char* /*argv*/[]) {
     std::unique_ptr<eng::engine> engine(eng::new_sdl_engine());
-
+    engine->load_texture("/home/gleb/projects/my-awesome-engine/build/"
+                         "04-opengl-basic/cute-dog-vector-png-2.png",
+                         780, 720, 4);
     // figure out why you need two loops
     bool          continue_loop = true;
     eng::triangle tr;
@@ -32,8 +35,17 @@ int main(int /*argc*/, char* /*argv*/[]) {
         file.open("/home/gleb/projects/my-awesome-engine/build/04-opengl-basic/"
                   "vertexes.txt");
 
-        file >> tr;
-        engine->render_triangle(tr);
+        eng::triangle tr_1;
+        file >> tr_1;
+        eng::triangle tr_2;
+        file >> tr_2;
+
+        float alpha = (std::sin(engine->time_from_init()) * 0.5f) + 0.5f;
+
+        auto tr_res = eng::blend(tr_1, tr_2, alpha);
+
+        engine->render_triangle(tr_1);
+        engine->render_triangle(tr_2);
         engine->swap_buffers();
     }
 
