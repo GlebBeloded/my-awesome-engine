@@ -1,5 +1,6 @@
 #pragma once
 
+#include "matrix.hpp"
 #include <iosfwd>
 #include <string>
 #include <string_view>
@@ -19,14 +20,12 @@ enum class event {
 };
 
 struct vertex {
-    float x  = 0.f;
-    float y  = 0.f;
-    float z  = 0.f;
-    float r  = 0.f;
-    float g  = 0.f;
-    float b  = 0.f;
-    float tx = 0.f;
-    float ty = 0.f;
+    matrix::vector coord;
+    float          r  = 0.f;
+    float          g  = 0.f;
+    float          b  = 0.f;
+    float          tx = 0.f;
+    float          ty = 0.f;
 };
 
 vertex blend(const vertex& vl, const vertex& vr, const float a);

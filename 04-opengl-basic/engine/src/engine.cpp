@@ -118,9 +118,7 @@ static std::ostream& operator<<(std::ostream& out, const SDL_version& v) {
 }
 
 std::istream& operator>>(std::istream& is, vertex& v) {
-    is >> v.x;
-    is >> v.y;
-    is >> v.z;
+    is >> v.coord;
 
     is >> v.r;
     is >> v.g;
@@ -321,6 +319,7 @@ sdl_engine::sdl_engine() {
 
     stbi_set_flip_vertically_on_load(true);
     glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     gl_error_check();
 }
 
@@ -414,14 +413,14 @@ void sdl_engine::swap_buffers() {
 
 vertex blend(const vertex& a, const vertex& b, const float t) {
     vertex r;
-    r.x  = lerp(a.x, b.x, t);
-    r.y  = lerp(a.y, b.y, t);
-    r.z  = lerp(a.z, b.z, t);
-    r.r  = lerp(a.r, b.r, t);
-    r.g  = lerp(a.g, b.g, t);
-    r.b  = lerp(a.b, b.b, t);
-    r.tx = lerp(a.tx, b.tx, t);
-    r.ty = lerp(a.ty, b.ty, t);
+    r.coord.x = lerp(a.coord.x, b.coord.x, t);
+    r.coord.y = lerp(a.coord.y, b.coord.y, t);
+    r.coord.z = lerp(a.coord.z, b.coord.z, t);
+    r.r       = lerp(a.r, b.r, t);
+    r.g       = lerp(a.g, b.g, t);
+    r.b       = lerp(a.b, b.b, t);
+    r.tx      = lerp(a.tx, b.tx, t);
+    r.ty      = lerp(a.ty, b.ty, t);
 
     return r;
 }

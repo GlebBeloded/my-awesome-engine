@@ -1,13 +1,21 @@
+add_library(matrix SHARED ${CMAKE_CURRENT_LIST_DIR}/matrix/src/matrix.cpp)
+
+target_include_directories(matrix PUBLIC ${CMAKE_CURRENT_LIST_DIR}/matrix/include/)
+target_compile_features(matrix PUBLIC cxx_std_17)
+
+
 add_library(openGL SHARED ${CMAKE_CURRENT_LIST_DIR}/openGL/src/glad.c)
 
-target_include_directories(openGL PRIVATE ${CMAKE_CURRENT_LIST_DIR}/openGL/include/)
+target_include_directories(openGL PUBLIC ${CMAKE_CURRENT_LIST_DIR}/openGL/include/)
 target_compile_features(openGL PUBLIC cxx_std_17)
 
 add_library(engine SHARED ${CMAKE_CURRENT_LIST_DIR}/engine/src/engine.cpp
                           ${CMAKE_CURRENT_LIST_DIR}/engine/src/shaders.cpp)
                           
-target_include_directories(engine PRIVATE ${CMAKE_CURRENT_LIST_DIR}/engine/include/
-                                          ${CMAKE_CURRENT_LIST_DIR}/openGL/include)
+target_include_directories(engine PUBLIC ${CMAKE_CURRENT_LIST_DIR}/engine/include/ 
+                                          ${CMAKE_CURRENT_LIST_DIR}/openGL/include/ 
+                                          ${CMAKE_CURRENT_LIST_DIR}/matrix/include/)
+
 
 target_compile_features(engine PUBLIC cxx_std_17)
 
@@ -16,18 +24,18 @@ if(NOT sdl2_FOUND)
     find_package(GetSDL2)
 endif()
 
-target_include_directories(engine PRIVATE ${SDL2_INCLUDE_DIRS})
+target_include_directories(engine PUBLIC ${SDL2_INCLUDE_DIRS})
 
 
-
-target_link_libraries(engine PRIVATE ${SDL2_LIBRARIES})
-target_link_libraries(engine PRIVATE openGL -lGL)
+target_link_libraries(engine PUBLIC matrix)
+target_link_libraries(engine PUBLIC ${SDL2_LIBRARIES})
+target_link_libraries(engine PUBLIC openGL -lGL)
 
 
 
 add_executable(game ${CMAKE_CURRENT_LIST_DIR}/game/main.cpp)
 target_compile_features(game PUBLIC cxx_std_17)
-target_include_directories(game PRIVATE ${CMAKE_CURRENT_LIST_DIR}/engine/include/)
-target_link_libraries(game PRIVATE engine)
+target_include_directories(game PUBLIC ${CMAKE_CURRENT_LIST_DIR}/engine/include/)
+target_link_libraries(game PUBLIC engine)
 
-install(TARGETS engine game)
+install(TARGETS matrix openGL engine game)
