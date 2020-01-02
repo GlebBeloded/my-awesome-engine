@@ -191,7 +191,7 @@ void sdl_engine::init_SDL() {
     }
 
     window = SDL_CreateWindow("OpenGL", SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED, 780, 720,
+                              SDL_WINDOWPOS_CENTERED, 480, 640,
                               SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 
     if (window == nullptr) {
@@ -365,7 +365,7 @@ void sdl_engine::render_line(const line& l) {
     auto program_id = shaders["line"];
     glUseProgram(program_id);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(line), &l.a.x);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, &l);
 
     glEnableVertexAttribArray(0);
     gl_error_check();

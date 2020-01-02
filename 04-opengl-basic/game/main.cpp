@@ -9,6 +9,8 @@
 #include <memory>
 #include <string_view>
 
+void render_grid(eng::engine* eng);
+
 int main(int /*argc*/, char* argv[]) {
 
     auto game_dir = std::filesystem::absolute(argv[0]);
@@ -71,8 +73,37 @@ int main(int /*argc*/, char* argv[]) {
         line.b.z = 1;
 
         // engine->render_line(line);
+        render_grid(engine.get());
+
         engine->swap_buffers();
     }
 
     return EXIT_SUCCESS;
+}
+
+void render_grid(eng::engine* eng) {
+    float horizontal_step = 2.f / 20.f;
+    float vertical_step   = 2.f / 10.f;
+
+    for (float i = -1.f; i <= 1.f; i += horizontal_step) {
+        eng::line line;
+        line.a.x = -1;
+        line.a.y = i;
+
+        line.b.x = 1;
+        line.b.y = i;
+
+        eng->render_line(line);
+    }
+
+    for (float i = -1.f; i <= 1.f; i += vertical_step) {
+        eng::line line;
+        line.a.x = i;
+        line.a.y = -1;
+
+        line.b.x = i;
+        line.b.y = 1;
+
+        eng->render_line(line);
+    }
 }
