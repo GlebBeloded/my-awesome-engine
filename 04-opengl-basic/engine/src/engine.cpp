@@ -4,17 +4,18 @@
 #include "engine.hpp"
 #include "shaders.hpp"
 
+#include "glad.h"
+#include <SDL.h>
 #include <algorithm>
 #include <array>
 #include <cassert>
 #include <exception>
+#include <fstream>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
-
-#include "glad.h"
-#include <SDL.h>
 
 template <typename T>
 static void load_gl_func(const char* func_name, T& result) {
@@ -58,43 +59,11 @@ T lerp(T a, T b, float t) {
     return a + t * (b - a);
 }
 
-static bool already_exist = false;
-
 constexpr static std::array<std::string_view, 17> event_names = {
     { /// input events
       "w_pressed", "a_pressed", "s_pressed", "d_pressed", "esc_pressed",
       "w_released", "a_released", "s_released", "d_released", "esc_released" }
 };
-
-namespace default_shaders {
-
-std::string_view vertex   = R"(
-                                    attribute vec3 a_position;
-                                    attribute vec3 a_color;
-                                    attribute vec2 a_tex_coord;
-                                    varying vec4 v_position;
-                                    varying vec3 v_color;
-                                    varying vec2 tex_coord;
-
-                                    void main()
-                                    {   
-                                        v_color = a_color;
-                                        v_position = vec4(a_position, 1.0);
-                                        gl_Position = v_position;
-                                        tex_coord = a_tex_coord;
-                                    }
-                                    )";
-std::string_view fragment = R"(
-                    varying vec3 v_color;
-                    uniform sampler2D s_texture;
-                    varying vec2 tex_coord;
-                    
-                      void main()
-                      {
-                        gl_FragColor = texture2D(s_texture, tex_coord);
-                      }
-                      )";
-} // namespace default_shaders
 
 std::ostream& operator<<(std::ostream& stream, const event e) {
     std::uint32_t           value = static_cast<std::uint32_t>(e);
@@ -176,9 +145,10 @@ static bool check_input(const SDL_Event& e, const binding*& result) {
 
 class sdl_engine final : public engine {
 public:
-    sdl_engine();
+    sdl_engine(const std::filesystem::path& game_path);
     virtual ~sdl_engine();
     bool  read_input(event& e) final;
+    void  render_line(const line& l) override;
     void  render_triangle(const triangle& t) override;
     void  swap_buffers() override;
     float time_from_init() override;
@@ -186,18 +156,19 @@ public:
                        int nrChannels) override;
 
 private:
-    SDL_GLContext gl_context  = nullptr;
-    GLuint        program_id_ = 0;
-    SDL_Window*   window      = nullptr;
+    SDL_GLContext gl_context = nullptr;
+    // map of strings mapped to the program IDs
+    std::map<std::string, GLuint> shaders;
+    SDL_Window*                   window = nullptr;
 
-    void init_SDL(std::stringstream& serr);
+    void init_SDL();
 };
 
-engine* new_sdl_engine() {
-    return new sdl_engine();
+engine* new_sdl_engine(const std::filesystem::path& game_path) {
+    return new sdl_engine(game_path);
 }
 
-void sdl_engine::init_SDL(std::stringstream& serr) {
+void sdl_engine::init_SDL() {
     using namespace std;
 
     SDL_version compiled = { 0, 0, 0 };
@@ -208,14 +179,14 @@ void sdl_engine::init_SDL(std::stringstream& serr) {
 
     if (SDL_COMPILEDVERSION !=
         SDL_VERSIONNUM(linked.major, linked.minor, linked.patch)) {
-        serr << "warning: SDL2 compiled and linked version mismatch: "
-             << compiled << " " << linked << endl;
+        std::cerr << "warning: SDL2 compiled and linked version mismatch: "
+                  << compiled << " " << linked << endl;
     }
 
     const int init_result = SDL_Init(SDL_INIT_EVERYTHING);
     if (init_result != 0) {
         const char* err_message = SDL_GetError();
-        serr << "error: failed call SDL_Init: " << err_message << endl;
+        std::cerr << "error: failed call SDL_Init: " << err_message << endl;
         throw std::runtime_error("Failed to init SDL");
     }
 
@@ -225,7 +196,8 @@ void sdl_engine::init_SDL(std::stringstream& serr) {
 
     if (window == nullptr) {
         const char* err_message = SDL_GetError();
-        serr << "error: failed call SDL_CreateWindow: " << err_message << endl;
+        std::cerr << "error: failed call SDL_CreateWindow: " << err_message
+                  << endl;
         SDL_Quit();
         throw std::runtime_error("Failed to create a window");
     }
@@ -262,68 +234,47 @@ void sdl_engine::init_SDL(std::stringstream& serr) {
     }
 }
 
-sdl_engine::sdl_engine() {
+sdl_engine::sdl_engine(const std::filesystem::path& game_path) {
     using namespace std;
-    stringstream serr;
 
     // Create SDL window with opengl context
-    init_SDL(serr);
+    init_SDL();
 
     // Get opengl functions from GLAD
     if (gladLoadGLES2Loader(SDL_GL_GetProcAddress) == 0) {
         throw std::logic_error("error: failed to initialize glad");
     }
+    // create vertex and fragment shader for drawning triangles
+    const std::vector<std::string_view> triangle_attributes{ "a_position",
+                                                             "a_color",
+                                                             "a_tex_coord" };
 
-    auto vert_shader     = comiple_vertex_shader(default_shaders::vertex);
-    auto fragment_shader = comiple_fragment_shader(default_shaders::fragment);
+    auto shaders_dir{ game_path / "shaders" };
 
-    program_id_ = glCreateProgram();
+    shaders["triangle"] = create_shader_program(shaders_dir / "triangle.vert",
+                                                shaders_dir / "triangle.frag",
+                                                triangle_attributes);
+
     gl_error_check();
-    if (0 == program_id_) {
+    if (0 == shaders["triangle"]) {
         throw std::runtime_error("failed to create gl program");
     }
 
-    glAttachShader(program_id_, vert_shader);
-    gl_error_check();
-    glAttachShader(program_id_, fragment_shader);
+    glValidateProgram(shaders["triangle"]);
     gl_error_check();
 
-    // bind attribute location
-    glBindAttribLocation(program_id_, 0, "a_position");
-    glBindAttribLocation(program_id_, 1, "a_color");
-    glBindAttribLocation(program_id_, 2, "a_tex_coord");
-    gl_error_check();
-    // link program after binding attribute locations
-    glLinkProgram(program_id_);
-    gl_error_check();
-    // Check the link status
-    GLint linked_status = 0;
-    glGetProgramiv(program_id_, GL_LINK_STATUS, &linked_status);
-    gl_error_check();
+    // create vertex and fragment shader for drawning lines
+    const std::vector<std::string_view> line_attributes{ "a_position" };
 
-    if (linked_status == 0) {
-        GLint infoLen = 0;
-        glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
-        gl_error_check();
-        std::vector<char> infoLog(static_cast<size_t>(infoLen));
-        glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
-        gl_error_check();
-        serr << "Error linking program:\n" << infoLog.data();
-        glDeleteProgram(program_id_);
+    shaders["line"] = create_shader_program(
+        shaders_dir / "line.vert", shaders_dir / "line.frag", line_attributes);
 
-        const int err = static_cast<int>(glGetError());
-        if (err != GL_NO_ERROR)
-            throw std::logic_error("OpenGL failed to load");
+    gl_error_check();
+    if (0 == shaders["line"]) {
+        throw std::runtime_error("failed to create gl program");
     }
 
-    glUseProgram(program_id_);
-
-    if (already_exist) {
-        throw std::runtime_error("engine already exist");
-    }
-    already_exist = true;
-
-    glValidateProgram(program_id_);
+    glValidateProgram(shaders["line"]);
     gl_error_check();
 
     stbi_set_flip_vertically_on_load(true);
@@ -334,9 +285,6 @@ sdl_engine::sdl_engine() {
 }
 
 sdl_engine::~sdl_engine() {
-    if (already_exist == false) {
-        throw std::runtime_error("engine not created");
-    }
     if (this == nullptr) {
         throw std::runtime_error("engine is a nullpointer");
     }
@@ -371,6 +319,8 @@ bool sdl_engine::read_input(event& e) {
 }
 
 void sdl_engine::render_triangle(const triangle& t) {
+    auto program_id = shaders["triangle"];
+    glUseProgram(program_id);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), &t.v[0]);
     gl_error_check();
@@ -384,7 +334,7 @@ void sdl_engine::render_triangle(const triangle& t) {
     glEnableVertexAttribArray(1);
     gl_error_check();
 
-    glValidateProgram(program_id_);
+    glValidateProgram(program_id);
     gl_error_check();
 
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), &t.v[0].tx);
@@ -395,19 +345,50 @@ void sdl_engine::render_triangle(const triangle& t) {
 
     // Check the validate status
     GLint validate_status = 0;
-    glGetProgramiv(program_id_, GL_VALIDATE_STATUS, &validate_status);
+    glGetProgramiv(program_id, GL_VALIDATE_STATUS, &validate_status);
     gl_error_check();
     if (validate_status == GL_FALSE) {
         GLint infoLen = 0;
-        glGetProgramiv(program_id_, GL_INFO_LOG_LENGTH, &infoLen);
+        glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &infoLen);
         gl_error_check();
         std::vector<char> infoLog(static_cast<size_t>(infoLen));
-        glGetProgramInfoLog(program_id_, infoLen, nullptr, infoLog.data());
+        glGetProgramInfoLog(program_id, infoLen, nullptr, infoLog.data());
         gl_error_check();
         std::cerr << "Error linking program:\n" << infoLog.data();
         throw std::runtime_error("error");
     }
     glDrawArrays(GL_TRIANGLES, 0, 3);
+    gl_error_check();
+}
+
+void sdl_engine::render_line(const line& l) {
+    auto program_id = shaders["line"];
+    glUseProgram(program_id);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(line), &l.a.x);
+
+    glEnableVertexAttribArray(0);
+    gl_error_check();
+
+    glValidateProgram(program_id);
+    gl_error_check();
+
+    // Check the validate status
+    GLint validate_status = 0;
+    glGetProgramiv(program_id, GL_VALIDATE_STATUS, &validate_status);
+    gl_error_check();
+    if (validate_status == GL_FALSE) {
+        GLint infoLen = 0;
+        glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &infoLen);
+        gl_error_check();
+        std::vector<char> infoLog(static_cast<size_t>(infoLen));
+        glGetProgramInfoLog(program_id, infoLen, nullptr, infoLog.data());
+        gl_error_check();
+        std::cerr << "Error linking program:\n" << infoLog.data();
+        throw std::runtime_error("error");
+    }
+
+    glDrawArrays(GL_LINES, 0, 2);
     gl_error_check();
 }
 

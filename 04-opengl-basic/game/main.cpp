@@ -3,14 +3,19 @@
 #include <array>
 #include <cmath>
 #include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <string_view>
 
-int main(int /*argc*/, char* /*argv*/[]) {
+int main(int /*argc*/, char* argv[]) {
 
-    std::unique_ptr<eng::engine> engine(eng::new_sdl_engine());
+    auto game_dir = std::filesystem::absolute(argv[0]);
+    game_dir.remove_filename();
+
+    std::unique_ptr<eng::engine> engine(eng::new_sdl_engine(game_dir));
+
     engine->load_texture("/home/gleb/projects/my-awesome-engine/build/"
                          "04-opengl-basic/cute-dog-vector-png-2.png",
                          780, 720, 4);
@@ -22,17 +27,17 @@ int main(int /*argc*/, char* /*argv*/[]) {
     file.open("/home/gleb/projects/my-awesome-engine/build/04-opengl-basic/"
               "vertexes.txt");
 
-    matrix::vector left;
-    left.x = 1.f;
+    // matrix::vector left;
+    // left.x = 1.f;
 
     file >> dog[0];
     file >> dog[1];
-    for (auto& tr : dog) {
-        for (auto& vec : tr.v) {
-            matrix::matrix m = matrix::scale(.5f) * matrix::move(left);
-            vec.coord        = vec.coord * m;
-        }
-    }
+    // for (auto& tr : dog) {
+    //     for (auto& vec : tr.v) {
+    //         matrix::matrix m = matrix::scale(.5f) * matrix::move(left);
+    //         vec.coord        = vec.coord * m;
+    //     }
+    // }
 
     // figure out why you need two loops
     bool continue_loop = true;
@@ -56,6 +61,16 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
         engine->render_triangle(dog[0]);
         engine->render_triangle(dog[1]);
+        eng::line line;
+        line.a.x = -1;
+        line.a.y = -1;
+        line.a.z = 1;
+
+        line.b.x = 1;
+        line.b.y = 1;
+        line.b.z = 1;
+
+        // engine->render_line(line);
         engine->swap_buffers();
     }
 

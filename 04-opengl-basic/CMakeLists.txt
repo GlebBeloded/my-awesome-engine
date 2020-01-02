@@ -39,3 +39,5 @@ target_include_directories(game PUBLIC ${CMAKE_CURRENT_LIST_DIR}/engine/include/
 target_link_libraries(game PUBLIC engine)
 
 install(TARGETS matrix openGL engine game)
+
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/data/shaders/ DESTINATION ${CMAKE_BINARY_DIR}/shaders)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "matrix.hpp"
+#include <filesystem>
 #include <iosfwd>
 #include <string>
 #include <string_view>
@@ -36,6 +37,11 @@ struct triangle {
 
 triangle blend(const triangle& tl, const triangle& tr, const float a);
 
+struct line {
+    matrix::vector a;
+    matrix::vector b;
+};
+
 std::istream& operator>>(std::istream& is, vertex&);
 std::istream& operator>>(std::istream& is, triangle&);
 
@@ -47,6 +53,7 @@ public:
     /// return true if more events in queue
     virtual bool  read_input(event& e)             = 0;
     virtual void  render_triangle(const triangle&) = 0;
+    virtual void  render_line(const line& l)       = 0;
     virtual void  swap_buffers()                   = 0;
     virtual float time_from_init()                 = 0;
     virtual uint  load_texture(std::string_view path, int width, int height,
@@ -55,5 +62,5 @@ public:
     virtual ~engine(){};
 };
 
-engine* new_sdl_engine();
+engine* new_sdl_engine(const std::filesystem::path& game_path);
 } // namespace eng
