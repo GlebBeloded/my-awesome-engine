@@ -23,15 +23,14 @@ int main(int /*argc*/, char* /*argv*/[]) {
               "vertexes.txt");
 
     matrix::vector left;
-    left.x = -0.2;
+    left.x = 1.f;
 
     file >> dog[0];
     file >> dog[1];
     for (auto& tr : dog) {
         for (auto& vec : tr.v) {
-            vec.coord = vec.coord * (matrix::scale(0.5f) * matrix::y_reflect() *
-                                     matrix::y_reflect());
-            vec.coord = vec.coord + left;
+            matrix::matrix m = matrix::scale(.5f) * matrix::move(left);
+            vec.coord        = vec.coord * m;
         }
     }
 

@@ -45,12 +45,18 @@ matrix operator*(const matrix& lh, const matrix& rh) {
     return out;
 }
 
+// this is defined as per vertical vector
 vector operator*(const vector& lh, const matrix& rh) {
     vector out;
 
-    out.x = (lh.x * rh.r1.x) + (lh.y * rh.r2.x) + (lh.z * rh.r3.x);
-    out.y = (lh.x * rh.r1.y) + (lh.y * rh.r2.y) + (lh.z * rh.r3.y);
-    out.z = (lh.x * rh.r1.z) + (lh.y * rh.r2.z) + (lh.z * rh.r3.z);
+    // if we have matrix [a b c] and vector [x y z] (actually [x y 1])
+
+    // a * x + b * y + c
+    // we do not need to multiply c by vector->z since in a simple 2D game z
+    // will always be equal to one
+    out.x = (rh.r1.x * lh.x) + (rh.r1.y * lh.y) + (rh.r1.z);
+    out.y = (rh.r2.x * lh.x) + (rh.r2.y * lh.y) + (rh.r2.z);
+    out.z = 1; // constant value to be left unchanged
 
     return out;
 }
@@ -74,7 +80,8 @@ std::istream& operator>>(std::istream& is, matrix& m) {
 }
 
 std::istream& operator>>(std::istream& is, vector& m) {
-    is >> m.x >> m.y >> m.z;
+    is >> m.x >> m.y;
+    m.z = 1;
     return is;
 }
 
@@ -83,7 +90,6 @@ matrix scale(float factor) {
 
     scale.r1.x = factor;
     scale.r2.y = factor;
-    scale.r3.z = factor;
 
     return scale;
 }
@@ -115,11 +121,11 @@ matrix y_reflect() {
     return scale;
 }
 
-matrix move(const vector& x) {
+matrix move(const vector& v) {
     auto out = identity();
 
-    out.r3.x = x.x;
-    out.r3.y = x.y;
+    out.r1.z = v.x;
+    out.r2.z = v.y;
 
     return out;
 }

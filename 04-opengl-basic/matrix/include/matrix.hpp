@@ -11,7 +11,6 @@ struct vector {
     vector() { x, y, z = 0; }
 };
 
-// 3x3 matrix
 struct matrix {
     vector r1;
     vector r2;

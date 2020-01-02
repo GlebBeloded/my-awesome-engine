@@ -189,16 +189,16 @@ private:
     SDL_GLContext gl_context  = nullptr;
     GLuint        program_id_ = 0;
     SDL_Window*   window      = nullptr;
+
+    void init_SDL(std::stringstream& serr);
 };
 
 engine* new_sdl_engine() {
     return new sdl_engine();
 }
 
-sdl_engine::sdl_engine() {
+void sdl_engine::init_SDL(std::stringstream& serr) {
     using namespace std;
-
-    stringstream serr;
 
     SDL_version compiled = { 0, 0, 0 };
     SDL_version linked   = { 0, 0, 0 };
@@ -260,7 +260,16 @@ sdl_engine::sdl_engine() {
                   << std::flush;
         throw std::runtime_error("opengl version too low");
     }
+}
 
+sdl_engine::sdl_engine() {
+    using namespace std;
+    stringstream serr;
+
+    // Create SDL window with opengl context
+    init_SDL(serr);
+
+    // Get opengl functions from GLAD
     if (gladLoadGLES2Loader(SDL_GL_GetProcAddress) == 0) {
         throw std::logic_error("error: failed to initialize glad");
     }
@@ -320,6 +329,7 @@ sdl_engine::sdl_engine() {
     stbi_set_flip_vertically_on_load(true);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_DEPTH_TEST);
     gl_error_check();
 }
 
@@ -361,7 +371,6 @@ bool sdl_engine::read_input(event& e) {
 }
 
 void sdl_engine::render_triangle(const triangle& t) {
-    GLintptr position_attr_offset = 0;
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), &t.v[0]);
     gl_error_check();
