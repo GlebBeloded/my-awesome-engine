@@ -16,31 +16,31 @@ int main(int /*argc*/, char* argv[]) {
     auto game_dir = std::filesystem::absolute(argv[0]);
     game_dir.remove_filename();
 
+    //create engine
     std::unique_ptr<eng::engine> engine(eng::new_sdl_engine(game_dir));
 
-    engine->load_texture("/home/gleb/projects/my-awesome-engine/build/"
-                         "04-opengl-basic/cute-dog-vector-png-2.png",
-                         780, 720, 4);
+    //load texture
+    engine->load_texture((game_dir / "textures" / "square.png").string(),256, 256, 4,0x1909);
 
-    eng::triangle dog[2];
+    eng::triangle square[2];
     std::ifstream file;
     file.exceptions(std::ios_base::failbit);
 
-    file.open("/home/gleb/projects/my-awesome-engine/build/04-opengl-basic/"
-              "vertexes.txt");
+    file.open((game_dir / "textures" / "square.coord").string());
 
-    // matrix::vector left;
-    // left.x = 1.f;
 
-    file >> dog[0];
-    file >> dog[1];
-    // for (auto& tr : dog) {
-    //     for (auto& vec : tr.v) {
-    //         matrix::matrix m = matrix::scale(.5f) * matrix::move(left);
-    //         vec.coord        = vec.coord * m;
-    //     }
-    // }
+    file >> square[0];
+    file >> square[1];
 
+    matrix::vector move;
+    move.x = 0.1;
+    move.y = 0.05;
+
+    for (auto& triangle : square){
+        for(auto& vertex: triangle.v){
+            vertex.coord = vertex.coord * matrix::scale(0.2f,0.1f) * matrix::move(move);
+        }
+    }
     // figure out why you need two loops
     bool continue_loop = true;
     while (continue_loop) {
@@ -59,20 +59,11 @@ int main(int /*argc*/, char* argv[]) {
 
         float alpha = (std::sin(engine->time_from_init()) * 0.5f) + 0.5f;
 
-        auto tr_res = eng::blend(dog[0], dog[1], alpha);
+        auto tr_res = eng::blend(square[0], square[1], alpha);
 
-        engine->render_triangle(dog[0]);
-        engine->render_triangle(dog[1]);
-        eng::line line;
-        line.a.x = -1;
-        line.a.y = -1;
-        line.a.z = 1;
+        engine->render_triangle(square[0]);
+        engine->render_triangle(square[1]);
 
-        line.b.x = 1;
-        line.b.y = 1;
-        line.b.z = 1;
-
-        // engine->render_line(line);
         render_grid(engine.get());
 
         engine->swap_buffers();

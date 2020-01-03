@@ -26,7 +26,7 @@ vector        operator+(const vector& lh, const vector& rh);
 std::istream& operator>>(std::istream& is, matrix& x);
 std::istream& operator>>(std::istream& is, vector& m);
 
-matrix scale(float factor);
+matrix scale(float x_factor,float y_factor);
 matrix rotate(float theta);
 matrix y_reflect();
 matrix move(const vector& x);

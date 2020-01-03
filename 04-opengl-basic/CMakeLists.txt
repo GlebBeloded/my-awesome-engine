@@ -1,3 +1,4 @@
+
 add_library(matrix SHARED ${CMAKE_CURRENT_LIST_DIR}/matrix/src/matrix.cpp)
 
 target_include_directories(matrix PUBLIC ${CMAKE_CURRENT_LIST_DIR}/matrix/include/)
@@ -41,3 +42,4 @@ target_link_libraries(game PUBLIC engine)
 install(TARGETS matrix openGL engine game)
 
 file(COPY ${CMAKE_CURRENT_LIST_DIR}/data/shaders/ DESTINATION ${CMAKE_BINARY_DIR}/shaders)
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/data/textures/ DESTINATION ${CMAKE_BINARY_DIR}/textures)

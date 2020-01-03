@@ -153,7 +153,7 @@ public:
     void  swap_buffers() override;
     float time_from_init() override;
     uint  load_texture(std::string_view path, int width, int height,
-                       int nrChannels) override;
+                       int nrChannels,int texture_mode) override;
 
 private:
     SDL_GLContext gl_context = nullptr;
@@ -191,7 +191,7 @@ void sdl_engine::init_SDL() {
     }
 
     window = SDL_CreateWindow("OpenGL", SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED, 480, 640,
+                              SDL_WINDOWPOS_CENTERED, 300, 600,
                               SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 
     if (window == nullptr) {
@@ -430,7 +430,7 @@ float sdl_engine::time_from_init() {
 }
 
 uint sdl_engine::load_texture(std::string_view path, int width, int height,
-                              int nrChannels) {
+                              int nrChannels,int texture_mode) {
     unsigned char* data =
         stbi_load(path.data(), &width, &height, &nrChannels, 0);
 
@@ -441,7 +441,7 @@ uint sdl_engine::load_texture(std::string_view path, int width, int height,
     glBindTexture(GL_TEXTURE_2D, texture);
     gl_error_check();
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, texture_mode,
                  GL_UNSIGNED_BYTE, data);
     gl_error_check();
 

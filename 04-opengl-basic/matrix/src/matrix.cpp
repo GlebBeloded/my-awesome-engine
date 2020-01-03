@@ -85,11 +85,11 @@ std::istream& operator>>(std::istream& is, vector& m) {
     return is;
 }
 
-matrix scale(float factor) {
+matrix scale(float x_factor,float y_factor) {
     auto scale = identity();
 
-    scale.r1.x = factor;
-    scale.r2.y = factor;
+    scale.r1.x = x_factor;
+    scale.r2.y = y_factor;
 
     return scale;
 }

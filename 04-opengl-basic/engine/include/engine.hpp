@@ -57,7 +57,7 @@ public:
     virtual void  swap_buffers()                   = 0;
     virtual float time_from_init()                 = 0;
     virtual uint  load_texture(std::string_view path, int width, int height,
-                               int nrChannels)     = 0;
+                               int nrChannels,int texture_mode)     = 0;
 
     virtual ~engine(){};
 };
