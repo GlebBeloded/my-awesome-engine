@@ -89,9 +89,9 @@ static std::ostream& operator<<(std::ostream& out, const SDL_version& v) {
 std::istream& operator>>(std::istream& is, vertex& v) {
     is >> v.coord;
 
-    is >> v.r;
-    is >> v.g;
-    is >> v.b;
+    is >> v.color.r;
+    is >> v.color.g;
+    is >> v.color.b;
 
     is >> v.tx;
     is >> v.ty;
@@ -153,7 +153,7 @@ public:
     void  swap_buffers() override;
     float time_from_init() override;
     uint  load_texture(std::string_view path, int width, int height,
-                       int nrChannels,int texture_mode) override;
+                       int nrChannels, int texture_mode) override;
 
 private:
     SDL_GLContext gl_context = nullptr;
@@ -328,7 +328,8 @@ void sdl_engine::render_triangle(const triangle& t) {
     glEnableVertexAttribArray(0);
     gl_error_check();
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), &t.v[0].r);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex),
+                          &t.v[0].color.r);
     gl_error_check();
 
     glEnableVertexAttribArray(1);
@@ -406,9 +407,9 @@ vertex blend(const vertex& a, const vertex& b, const float t) {
     r.coord.x = lerp(a.coord.x, b.coord.x, t);
     r.coord.y = lerp(a.coord.y, b.coord.y, t);
     r.coord.z = lerp(a.coord.z, b.coord.z, t);
-    r.r       = lerp(a.r, b.r, t);
-    r.g       = lerp(a.g, b.g, t);
-    r.b       = lerp(a.b, b.b, t);
+    r.color.r = lerp(a.color.r, b.color.r, t);
+    r.color.g = lerp(a.color.g, b.color.g, t);
+    r.color.b = lerp(a.color.b, b.color.b, t);
     r.tx      = lerp(a.tx, b.tx, t);
     r.ty      = lerp(a.ty, b.ty, t);
 
@@ -430,7 +431,7 @@ float sdl_engine::time_from_init() {
 }
 
 uint sdl_engine::load_texture(std::string_view path, int width, int height,
-                              int nrChannels,int texture_mode) {
+                              int nrChannels, int texture_mode) {
     unsigned char* data =
         stbi_load(path.data(), &width, &height, &nrChannels, 0);
 

@@ -20,11 +20,21 @@ enum class event {
     esc_released
 };
 
+struct rgb {
+    float r       = 0.f;
+    float g       = 0.f;
+    float b       = 0.f;
+    rgb&  operator=(const rgb& rh);
+};
+rgb& rgb::operator=(const rgb& rh) {
+    r = rh.r;
+    g = rh.g;
+    b = rh.b;
+    return *this;
+}
 struct vertex {
     matrix::vector coord;
-    float          r  = 0.f;
-    float          g  = 0.f;
-    float          b  = 0.f;
+    rgb            color;
     float          tx = 0.f;
     float          ty = 0.f;
 };
@@ -51,13 +61,13 @@ class engine {
 public:
     /// pool event from input queue
     /// return true if more events in queue
-    virtual bool  read_input(event& e)             = 0;
-    virtual void  render_triangle(const triangle&) = 0;
-    virtual void  render_line(const line& l)       = 0;
-    virtual void  swap_buffers()                   = 0;
-    virtual float time_from_init()                 = 0;
+    virtual bool  read_input(event& e)                           = 0;
+    virtual void  render_triangle(const triangle&)               = 0;
+    virtual void  render_line(const line& l)                     = 0;
+    virtual void  swap_buffers()                                 = 0;
+    virtual float time_from_init()                               = 0;
     virtual uint  load_texture(std::string_view path, int width, int height,
-                               int nrChannels,int texture_mode)     = 0;
+                               int nrChannels, int texture_mode) = 0;
 
     virtual ~engine(){};
 };

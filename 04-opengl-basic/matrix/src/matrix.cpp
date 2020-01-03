@@ -85,7 +85,7 @@ std::istream& operator>>(std::istream& is, vector& m) {
     return is;
 }
 
-matrix scale(float x_factor,float y_factor) {
+matrix scale(float x_factor, float y_factor) {
     auto scale = identity();
 
     scale.r1.x = x_factor;
@@ -126,6 +126,16 @@ matrix move(const vector& v) {
 
     out.r1.z = v.x;
     out.r2.z = v.y;
+
+    return out;
+}
+
+matrix counter_clockwise_90() {
+    auto out = identity();
+    out.r1.x = 0.f;
+    out.r1.y = -1.f;
+    out.r2.x = 1.f;
+    out.r2.y = 0.f;
 
     return out;
 }
