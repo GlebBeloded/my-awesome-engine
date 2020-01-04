@@ -68,9 +68,10 @@ int main(int /*argc*/, char* argv[]) {
     for (auto& triangle : square) {
         for (auto& vertex : triangle.v) {
             vertex.coord = vertex.coord * matrix::scale(0.2f, 0.1f) *
-                           matrix::move(move) * matrix::counter_clockwise_90();
+                           matrix::move(move);
         }
     }
+
     // figure out why you need two loops
     bool continue_loop = true;
     while (continue_loop) {
@@ -82,6 +83,22 @@ int main(int /*argc*/, char* argv[]) {
                 case eng::event::esc_pressed:
                     continue_loop = false;
                     break;
+                case eng::event::w_pressed:
+                    for (auto& triangle : square) {
+                        for (auto& vertex : triangle.v) {
+                            vertex.coord = vertex.coord  * matrix::counter_clockwise_90() * matrix::scale(2,0.5f);
+                        }
+                    }
+                    break;
+                case eng::event::s_pressed:
+                    for (auto& triangle : square) {
+                        for (auto& vertex : triangle.v) {
+                            move.x = 0;
+                            move.y = -.1f;
+                            vertex.coord = vertex.coord  * matrix::move(move);
+                        }
+                    }
+                break;
                 default:
                     break;
             }

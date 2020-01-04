@@ -14,15 +14,21 @@ constexpr static std::array<eng::rgb, 5> colors{
       { 216.f / 255.f, 191.f / 255.f, 216.f / 255.f } }
 };
 
+constexpr matrix::vector zero_vector{};
+
+
 class tile {
 public:
-    tile(int _x, int _y, color col, const matrix::matrix& m);
+    tile(std::pair<float,float>_coords, color col, const matrix::matrix& m);
     void apply_matrix(const matrix::matrix& m);
     void set_color(color col);
+    //only rotates texture
+    void rotate();
+    void render(eng::engine*);
 
 private:
     void                         init_tex_coord();
-    int                          x, y;
+    std::pair<float,float> coords;
     eng::rgb                     color;
     std::array<eng::triangle, 2> data;
 };
