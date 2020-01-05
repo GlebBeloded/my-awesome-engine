@@ -26,12 +26,7 @@ struct rgb {
     float b       = 0.f;
     rgb&  operator=(const rgb& rh);
 };
-rgb& rgb::operator=(const rgb& rh) {
-    r = rh.r;
-    g = rh.g;
-    b = rh.b;
-    return *this;
-}
+
 struct vertex {
     matrix::vector coord;
     rgb            color;

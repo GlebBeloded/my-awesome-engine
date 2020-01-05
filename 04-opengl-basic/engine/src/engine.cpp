@@ -59,6 +59,13 @@ T lerp(T a, T b, float t) {
     return a + t * (b - a);
 }
 
+rgb& rgb::operator=(const rgb& rh) {
+    r = rh.r;
+    g = rh.g;
+    b = rh.b;
+    return *this;
+}
+
 constexpr static std::array<std::string_view, 17> event_names = {
     { /// input events
       "w_pressed", "a_pressed", "s_pressed", "d_pressed", "esc_pressed",

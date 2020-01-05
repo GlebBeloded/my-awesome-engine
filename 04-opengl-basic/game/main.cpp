@@ -1,5 +1,6 @@
 #include "engine.hpp"
 #include "glad.h"
+#include "pieces.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -58,19 +59,20 @@ int main(int /*argc*/, char* argv[]) {
     //                                                                                       since the result is position between two tiles and square would be rendered on the line between those two tiles
     //                                                                                       we substract half of the one displacement in the given dimension to further get desired coordinates, i.e:
     //COORDIANTE_SPACE_MIN + (COORDINATE_SPACE = abs(COORDIANTE_SPACE_MIN)+abs(COORDIANTE_SPACE_MAX) / SQUARES_IN_DIMENSION) * POSITIVE_DISPLACEMENT - (COORDINATE_SPACE / SQUARES_IN_DIMENSION / 2)
-
+    // clang-format on
     move.x = -1.f + (2.f / 10.f) * 1 - (2.f / 10.f / 2.f);
     move.y = -1.f + (2.f / 20.f) * 1 - (2.f / 20.f / 2.f);
 
-    move.x = 0- (2.f / 10.f / 2.f);
-    move.y = 0- (2.f / 20.f / 2.f);
-    // clang-format on
+    move.x = 0 - (2.f / 10.f / 2.f);
+    move.y = 0 - (2.f / 20.f / 2.f);
+
     for (auto& triangle : square) {
         for (auto& vertex : triangle.v) {
-            vertex.coord = vertex.coord * matrix::scale(0.2f, 0.1f) *
-                           matrix::move(move);
+            vertex.coord = vertex.coord * matrix::scale(0.2f, 0.1f);
         }
     }
+
+    tetris::O test_piece{};
 
     // figure out why you need two loops
     bool continue_loop = true;
@@ -84,21 +86,17 @@ int main(int /*argc*/, char* argv[]) {
                     continue_loop = false;
                     break;
                 case eng::event::w_pressed:
-                    for (auto& triangle : square) {
-                        for (auto& vertex : triangle.v) {
-                            vertex.coord = vertex.coord  * matrix::counter_clockwise_90() * matrix::scale(2,0.5f);
-                        }
-                    }
+                    test_piece.rotate();
                     break;
                 case eng::event::s_pressed:
-                    for (auto& triangle : square) {
-                        for (auto& vertex : triangle.v) {
-                            move.x = 0;
-                            move.y = -.1f;
-                            vertex.coord = vertex.coord  * matrix::move(move);
-                        }
-                    }
-                break;
+                    test_piece.move(event);
+                    break;
+                case eng::event::d_pressed:
+                    test_piece.move(event);
+                    break;
+                case eng::event::a_pressed:
+                    test_piece.move(event);
+                    break;
                 default:
                     break;
             }
@@ -108,10 +106,11 @@ int main(int /*argc*/, char* argv[]) {
 
         auto tr_res = eng::blend(square[0], square[1], alpha);
 
-        engine->render_triangle(square[0]);
-        engine->render_triangle(square[1]);
-        engine->render_triangle(square[2]);
-        engine->render_triangle(square[3]);
+        // engine->render_triangle(square[0]);
+        // engine->render_triangle(square[1]);
+        // engine->render_triangle(square[2]);
+        // engine->render_triangle(square[3]);
+        test_piece.render(engine.get());
 
         render_grid(engine.get());
 

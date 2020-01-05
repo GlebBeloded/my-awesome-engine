@@ -1,17 +1,20 @@
+#pragma once
 #include "types.hpp"
 
-namespace tetris{
+namespace tetris {
 
-class O : public piece{
-    O(std::array<tile, 4> _data)
-        : piece{_data} {}
-    virtual std::string_view    type()           = 0;
-    virtual void                rotate()         = 0;
-    virtual void                move(eng::event) = 0;
-    virtual std::array<tile, 4> get_tiles()      = 0;
+class O : public piece {
+public:
+    O();
+    virtual piece_type          type() { return kind; };
+    virtual void                rotate();
+    virtual void                move(eng::event);
+    virtual std::array<tile, 4> get_tiles() { return data; };
+    virtual void                render(eng::engine*);
 
 private:
     std::array<tile, 4> data;
+    piece_type          kind;
 };
 
-}
+} // namespace tetris

@@ -36,25 +36,23 @@ target_link_libraries(engine PUBLIC openGL -lGL)
 
 add_library(tetris SHARED ${CMAKE_CURRENT_LIST_DIR}/game/src/types.cpp 
                           ${CMAKE_CURRENT_LIST_DIR}/game/src/pieces.cpp 
-                          ${CMAKE_CURRENT_LIST_DIR}/game/src/state.cpp
-                          ${CMAKE_CURRENT_LIST_DIR}/game/include/types.hpp 
-                          ${CMAKE_CURRENT_LIST_DIR}/game/include/pieces.hpp 
-                          ${CMAKE_CURRENT_LIST_DIR}/game/include/state.hpp)
+                          ${CMAKE_CURRENT_LIST_DIR}/game/src/state.cpp)
 
 target_include_directories(tetris PUBLIC ${CMAKE_CURRENT_LIST_DIR}/engine/include/ 
                                           ${CMAKE_CURRENT_LIST_DIR}/matrix/include/
                                           ${CMAKE_CURRENT_LIST_DIR}/game/include/)
 
 
-
+target_compile_features(tetris PUBLIC cxx_std_17)
 
 
 add_executable(game ${CMAKE_CURRENT_LIST_DIR}/game/main.cpp)
 target_compile_features(game PUBLIC cxx_std_17)
-target_include_directories(game PUBLIC ${CMAKE_CURRENT_LIST_DIR}/engine/include/)
-target_link_libraries(game PUBLIC engine)
+target_include_directories(game PUBLIC ${CMAKE_CURRENT_LIST_DIR}/engine/include/
+                                        ${CMAKE_CURRENT_LIST_DIR}/game/include/)
+target_link_libraries(game PUBLIC engine tetris)
 
-install(TARGETS matrix openGL engine game)
+install(TARGETS matrix openGL engine game tetris)
 
 file(COPY ${CMAKE_CURRENT_LIST_DIR}/data/shaders/ DESTINATION ${CMAKE_BINARY_DIR}/shaders)
 file(COPY ${CMAKE_CURRENT_LIST_DIR}/data/textures/ DESTINATION ${CMAKE_BINARY_DIR}/textures)
