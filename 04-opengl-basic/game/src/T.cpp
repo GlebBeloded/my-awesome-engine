@@ -2,10 +2,10 @@
 
 tetris::T::T()
     : kind{ piece_types::T } {
-    data[0].move_to_coords(4, 10); // A
-    data[1].move_to_coords(5, 10); // B CENTERPIECE
-    data[2].move_to_coords(6, 10); // C
-    data[3].move_to_coords(5, 11); // D
+    data[0].move_to_coords(3, 9);  // A
+    data[1].move_to_coords(4, 9);  // B CENTERPIECE
+    data[2].move_to_coords(5, 9);  // C
+    data[3].move_to_coords(4, 10); // D
     position_iterator = 0;
 }
 

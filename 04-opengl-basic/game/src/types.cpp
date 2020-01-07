@@ -65,11 +65,11 @@ inline void tetris::tile::normalize() {
     data[1].v[2].coord.x = -0.5;
     data[1].v[2].coord.y = -0.5;
 
-    apply_matrix(
-        matrix::move({ displacement_from_center.first,
-                       displacement_from_center.second }) *
-        matrix::scale(2.f / state::board_size.x, 2.f / state::board_size.y));
-    coords = { 5, 10 };
+    apply_matrix(matrix::move({ displacement_from_center.first,
+                                displacement_from_center.second }) *
+                 matrix::scale(2.f / state::board_size.first,
+                               2.f / state::board_size.second));
+    coords = { 4, 9 };
 }
 
 tetris::tile::tile()
@@ -95,9 +95,6 @@ void tetris::tile::render(eng::engine* k) {
 }
 
 void tetris::tile::move_to_coords(int x, int y) {
-
-    if (x < 1 || x > state::board_size.x)
-        throw std::logic_error("x coordinates outside of field");
 
     auto displacement = calculate_displacement(coords, { x, y });
 

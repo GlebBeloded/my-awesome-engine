@@ -1,31 +1,8 @@
-#include "state.hpp"
+#include "tetris.hpp"
 #include "pieces.hpp"
+#include "state.hpp"
 #include "types.hpp"
 #include <random>
-
-namespace tetris {
-class game {
-public:
-    game(std::random_device&, eng::engine*);
-    void   render_board();
-    piece* generate_piece();
-    void   play();
-    void   round();
-
-private:
-    float                              speed{ 1.0 };
-    bool                               lost{ false };
-    inline bool                        is_free(int, int);
-    void                               fixate(piece*);
-    eng::engine*                       engine;
-    std::mt19937                       random_engine;
-    piece*                             current_piece{ nullptr };
-    std::uniform_int_distribution<int> pieces_distribution{ 0, 6 };
-    std::uniform_int_distribution<int> color_distribution{ 0,
-                                                           colors.size() - 1 };
-    std::array<tile*, state::board_size.x * state::board_size.y> field{};
-};
-} // namespace tetris
 
 tetris::game::game(std::random_device& seed, eng::engine* e)
     : random_engine{}
@@ -33,12 +10,42 @@ tetris::game::game(std::random_device& seed, eng::engine* e)
     random_engine.seed();
 }
 
+void tetris::game::render_grid() {
+
+    float vertical_step   = 2.f / static_cast<float>(state::board_size.first);
+    float horizontal_step = 2.f / static_cast<float>(state::board_size.second);
+
+    for (float i = -1.f; i <= 1.f; i += horizontal_step) {
+        eng::line line;
+        line.a.x = -1;
+        line.a.y = i;
+
+        line.b.x = 1;
+        line.b.y = i;
+
+        engine->render_line(line);
+    }
+
+    for (float i = -1.f; i <= 1.f; i += vertical_step) {
+        eng::line line;
+        line.a.x = i;
+        line.a.y = -1;
+
+        line.b.x = i;
+        line.b.y = 1;
+
+        engine->render_line(line);
+    }
+}
+
 void tetris::game::render_board() {
-    for (const auto& tile : field)
+    for (auto tile : field)
         if (tile != nullptr)
             tile->render(engine);
     if (this->current_piece != nullptr)
         current_piece->render(engine);
+
+    render_grid();
 }
 
 // returns RAW POINTER
@@ -79,7 +86,10 @@ tetris::piece* tetris::game::generate_piece() {
 
 void tetris::game::fixate(tetris::piece* ptr) {
     for (auto p : ptr->get_tiles()) {
-        field[p.coords.first * p.coords.second] = new tile{ p };
+        field[(p.coords.first + (state::board_size.first * p.coords.second))] =
+            new tile{ p };
+        if (p.coords.second > 20)
+            lost = true;
     }
 }
 
@@ -90,27 +100,29 @@ void tetris::game::play() {
     while (!lost) {
         round();
         eng::event event;
-        engine->read_input(event);
-        switch (event) {
-            case eng::event::esc_pressed:
-                lost = true;
-                break;
-            case eng::event::w_pressed:
-                current_piece->rotate();
-                break;
-            case eng::event::s_pressed:
-                current_piece->move(event);
-                break;
-            case eng::event::d_pressed:
-                current_piece->move(event);
-                break;
-            case eng::event::a_pressed:
-                current_piece->move(event);
-                break;
-            default:
-                break;
+        while (engine->read_input(event)) {
+            switch (event) {
+                case eng::event::esc_pressed:
+                    lost = true;
+                    break;
+                case eng::event::w_pressed:
+                    current_piece->rotate();
+                    break;
+                case eng::event::s_pressed:
+                    current_piece->move(event);
+                    break;
+                case eng::event::d_pressed:
+                    current_piece->move(event);
+                    break;
+                case eng::event::a_pressed:
+                    current_piece->move(event);
+                    break;
+                default:
+                    break;
+            }
         }
         render_board();
+        engine->swap_buffers();
     }
 }
 
@@ -119,9 +131,21 @@ void tetris::game::round() {
         current_piece = generate_piece();
 
     for (const auto& tile : current_piece->get_tiles()) {
-        if ((field.at(tile.coords.first - 1 * tile.coords.second) != nullptr) ||
-            tile.coords.first == 1) {
+
+        if (tile.coords.second == 0) {
             fixate(current_piece);
+            delete current_piece;
+            current_piece = nullptr;
+            return;
+        }
+        if ((field.at((tile.coords.first +
+                       (state::board_size.first * (tile.coords.second - 1)))) !=
+             nullptr)) {
+            fixate(current_piece);
+            delete current_piece;
+            current_piece = nullptr;
+            return;
         }
     }
+    // current_piece->move(eng::event::s_pressed);
 }

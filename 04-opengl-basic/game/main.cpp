@@ -1,6 +1,6 @@
 #include "engine.hpp"
 #include "glad.h"
-#include "pieces.hpp"
+#include "tetris.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -10,7 +10,6 @@
 #include <iostream>
 #include <memory>
 #include <random>
-#include <state.hpp>
 #include <string_view>
 
 void render_grid(eng::engine* eng);
@@ -28,7 +27,9 @@ int main(int /*argc*/, char* argv[]) {
                          256, 4, GL_LUMINANCE);
 
     std::random_device rdevice{};
-    tetris::game(rdevice, engine.get());
+    tetris::game       tetris{ rdevice, engine.get() };
+
+    tetris.play();
 
     matrix::vector move;
     // clang-format off
@@ -45,46 +46,44 @@ int main(int /*argc*/, char* argv[]) {
     move.x = 0 - (2.f / 10.f / 2.f);
     move.y = 0 - (2.f / 20.f / 2.f);
 
-    tetris::Z test_piece{};
+    // // figure out why you need two loops
+    // bool continue_loop = true;
+    // while (continue_loop) {
+    //     eng::event event;
 
-    // figure out why you need two loops
-    bool continue_loop = true;
-    while (continue_loop) {
-        eng::event event;
+    //     while (engine->read_input(event)) {
+    //         std::cout << event << std::endl;
+    //         switch (event) {
+    //             case eng::event::esc_pressed:
+    //                 continue_loop = false;
+    //                 break;
+    //             case eng::event::w_pressed:
+    //                 test_piece.rotate();
+    //                 break;
+    //             case eng::event::s_pressed:
+    //                 test_piece.move(event);
+    //                 break;
+    //             case eng::event::d_pressed:
+    //                 test_piece.move(event);
+    //                 break;
+    //             case eng::event::a_pressed:
+    //                 test_piece.move(event);
+    //                 break;
+    //             default:
+    //                 break;
+    //         }
+    //     }
 
-        while (engine->read_input(event)) {
-            std::cout << event << std::endl;
-            switch (event) {
-                case eng::event::esc_pressed:
-                    continue_loop = false;
-                    break;
-                case eng::event::w_pressed:
-                    test_piece.rotate();
-                    break;
-                case eng::event::s_pressed:
-                    test_piece.move(event);
-                    break;
-                case eng::event::d_pressed:
-                    test_piece.move(event);
-                    break;
-                case eng::event::a_pressed:
-                    test_piece.move(event);
-                    break;
-                default:
-                    break;
-            }
-        }
+    //     float alpha = (std::sin(engine->time_from_init()) * 0.5f) + 0.5f;
 
-        float alpha = (std::sin(engine->time_from_init()) * 0.5f) + 0.5f;
+    //     // auto tr_res = eng::blend(square[0], square[1], alpha);
 
-        // auto tr_res = eng::blend(square[0], square[1], alpha);
+    //     test_piece.render(engine.get());
 
-        test_piece.render(engine.get());
+    render_grid(engine.get());
 
-        render_grid(engine.get());
-
-        engine->swap_buffers();
-    }
+    engine->swap_buffers();
+    // }
 
     return EXIT_SUCCESS;
 }
