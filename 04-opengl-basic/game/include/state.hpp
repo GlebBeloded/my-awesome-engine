@@ -1,9 +1,7 @@
 #pragma once
-
+#include <utility>
 namespace state {
-struct BoardSize {
-    float x, y;
-};
-constexpr static BoardSize board_size{ 10, 20 };
-constexpr static BoardSize coordinate_system_center{ 0, 0 };
+
+constexpr std::pair<int, int>     board_size{ 10, 20 };
+constexpr std::pair<float, float> coordinate_system_center{ 0, 0 };
 } // namespace state

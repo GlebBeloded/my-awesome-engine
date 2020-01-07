@@ -9,6 +9,8 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <random>
+#include <state.hpp>
 #include <string_view>
 
 void render_grid(eng::engine* eng);
@@ -25,31 +27,8 @@ int main(int /*argc*/, char* argv[]) {
     engine->load_texture((game_dir / "textures" / "square.png").string(), 256,
                          256, 4, GL_LUMINANCE);
 
-    eng::triangle square[4];
-    std::ifstream file;
-    file.exceptions(std::ios_base::failbit);
-
-    file.open((game_dir / "textures" / "square.coord").string());
-
-    file >> square[0];
-    file >> square[1];
-    file.close();
-
-    file.open((game_dir / "textures" / "square.coord").string());
-    file >> square[2];
-    file >> square[3];
-
-    matrix::vector test;
-    // we need to move x by tile.x length, x length = 2.f / 10.f
-    // somehow 1 is correct
-    test.x = 1;
-
-    for (auto& vertex : square[2].v) {
-        vertex.coord = vertex.coord * matrix::move(test);
-    }
-    for (auto& vertex : square[3].v) {
-        vertex.coord = vertex.coord * matrix::move(test);
-    }
+    std::random_device rdevice{};
+    tetris::game(rdevice, engine.get());
 
     matrix::vector move;
     // clang-format off
@@ -66,13 +45,7 @@ int main(int /*argc*/, char* argv[]) {
     move.x = 0 - (2.f / 10.f / 2.f);
     move.y = 0 - (2.f / 20.f / 2.f);
 
-    for (auto& triangle : square) {
-        for (auto& vertex : triangle.v) {
-            vertex.coord = vertex.coord * matrix::scale(0.2f, 0.1f);
-        }
-    }
-
-    tetris::O test_piece{};
+    tetris::Z test_piece{};
 
     // figure out why you need two loops
     bool continue_loop = true;
@@ -104,12 +77,8 @@ int main(int /*argc*/, char* argv[]) {
 
         float alpha = (std::sin(engine->time_from_init()) * 0.5f) + 0.5f;
 
-        auto tr_res = eng::blend(square[0], square[1], alpha);
+        // auto tr_res = eng::blend(square[0], square[1], alpha);
 
-        // engine->render_triangle(square[0]);
-        // engine->render_triangle(square[1]);
-        // engine->render_triangle(square[2]);
-        // engine->render_triangle(square[3]);
         test_piece.render(engine.get());
 
         render_grid(engine.get());

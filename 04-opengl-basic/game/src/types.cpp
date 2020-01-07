@@ -8,12 +8,6 @@ constexpr auto to_underlying(E e) noexcept {
     return static_cast<std::underlying_type_t<E>>(e);
 }
 
-// given two points,determine what vector needs to be aplied to move from A to B
-inline std::pair<float, float> calculate_displacement(
-    const matrix::vector& origin, const matrix::vector& current) {
-    return { -origin.x + current.x, -origin.y + current.y };
-}
-
 inline std::pair<float, float> tetris::tile::position() {
     return { (data[1].v[2].coord.x + data[0].v[1].coord.x) / 2.f,
              (data[1].v[2].coord.y + data[0].v[1].coord.y) / 2.f };
@@ -75,7 +69,7 @@ inline void tetris::tile::normalize() {
         matrix::move({ displacement_from_center.first,
                        displacement_from_center.second }) *
         matrix::scale(2.f / state::board_size.x, 2.f / state::board_size.y));
-    coords = { 0, 0 };
+    coords = { 5, 10 };
 }
 
 tetris::tile::tile()
@@ -99,16 +93,16 @@ void tetris::tile::render(eng::engine* k) {
     k->render_triangle(data.at(0));
     k->render_triangle(data.at(1));
 }
-void tetris::tile::set_coords(float x, float y) {
-    if (x > state::board_size.x || x < 1.f)
-        throw std::logic_error("x coordinate outside of field");
 
-    //+5 as we first spawn piece above the board
-    if (y > state::board_size.y + 5.f || y < 1.f)
-        throw std::logic_error("y coordinate outside of field");
+void tetris::tile::move_to_coords(int x, int y) {
 
-    apply_matrix(matrix::move(
-        { 2.f / state::board_size.x * x, 2.f / state::board_size.y * y }));
+    if (x < 1 || x > state::board_size.x)
+        throw std::logic_error("x coordinates outside of field");
 
+    auto displacement = calculate_displacement(coords, { x, y });
+
+    apply_matrix(
+        matrix::move({ displacement.first * singular_displacement.first,
+                       displacement.second * singular_displacement.second }));
     coords = { x, y };
 };

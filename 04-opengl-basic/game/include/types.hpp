@@ -7,7 +7,7 @@
 
 namespace tetris {
 enum class color { red = 0, blue, green, purple, gray };
-enum class piece_type { I, J, L, O, S, T, Z };
+enum class piece_types { I, J, L, O, S, T, Z };
 
 constexpr static std::array<eng::rgb, 5> colors{
     { { 240.f / 255.f, 128.f / 255.f, 128.f / 255.f },
@@ -25,8 +25,15 @@ constexpr matrix::matrix move_down{ matrix::move(matrix::vector{ 0.f, -.1f }) };
 // displacement_from_center represents how much do we need to move one piece by
 // x and by y so it will fit into a square
 constexpr std::pair<float, float> displacement_from_center{
-    (state::coordinate_system_center.x - (2.f / state::board_size.x / 2.f)),
-    (state::coordinate_system_center.y - (2.f / state::board_size.y / 2.f))
+    (state::coordinate_system_center.first -
+     (2.f / state::board_size.first / 2.f)),
+    (state::coordinate_system_center.second -
+     (2.f / state::board_size.second / 2.f))
+};
+// how much in normalized opengl coordinates we have to move a tile so it move
+// to a next tile
+constexpr std::pair<float, float> singular_displacement{
+    ((2.f / state::board_size.first)), ((2.f / state::board_size.second))
 };
 
 class tile {
@@ -37,8 +44,8 @@ public:
     // only rotates texture
     void                    rotate();
     void                    render(eng::engine*);
-    void                    set_coords(float x, float y);
-    std::pair<float, float> coords; // change to int
+    void                    move_to_coords(int x, int y);
+    std::pair<int, int>     coords;
     std::pair<float, float> position();
 
 private:
@@ -51,12 +58,25 @@ private:
 class piece {
 
 public:
-    piece() {}
-    virtual piece_type          type()               = 0;
-    virtual void                rotate()             = 0;
-    virtual void                move(eng::event)     = 0;
-    virtual std::array<tile, 4> get_tiles()          = 0;
-    virtual void                render(eng::engine*) = 0;
+    piece(){};
+    virtual piece_types                        type()                       = 0;
+    virtual void                               rotate()                     = 0;
+    virtual void                               move(eng::event)             = 0;
+    virtual std::array<std::pair<int, int>, 4> coords_after_rotation(int i) = 0;
+    virtual std::array<tile, 4>                get_tiles()                  = 0;
+    virtual void                               render(eng::engine*)         = 0;
+    virtual void                               set_color(color)             = 0;
+    virtual ~piece() {}
 };
 
+// given two points,determine what vector needs to be aplied to move from A to B
+inline std::pair<float, float> calculate_displacement(
+    const matrix::vector& origin, const matrix::vector& current) {
+    return { -origin.x + current.x, -origin.y + current.y };
+}
+
+inline std::pair<int, int> calculate_displacement(
+    const std::pair<int, int>& origin, const std::pair<int, int>& current) {
+    return { -origin.first + current.first, -origin.second + current.second };
+}
 } // namespace tetris

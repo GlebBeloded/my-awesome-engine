@@ -35,8 +35,14 @@ target_link_libraries(engine PUBLIC ${SDL2_LIBRARIES})
 target_link_libraries(engine PUBLIC openGL -lGL)
 
 add_library(tetris SHARED ${CMAKE_CURRENT_LIST_DIR}/game/src/types.cpp 
-                          ${CMAKE_CURRENT_LIST_DIR}/game/src/pieces.cpp 
-                          ${CMAKE_CURRENT_LIST_DIR}/game/src/state.cpp)
+                          ${CMAKE_CURRENT_LIST_DIR}/game/src/O.cpp
+                          ${CMAKE_CURRENT_LIST_DIR}/game/src/I.cpp
+                          ${CMAKE_CURRENT_LIST_DIR}/game/src/T.cpp
+                          ${CMAKE_CURRENT_LIST_DIR}/game/src/L.cpp
+                          ${CMAKE_CURRENT_LIST_DIR}/game/src/J.cpp
+                          ${CMAKE_CURRENT_LIST_DIR}/game/src/S.cpp
+                          ${CMAKE_CURRENT_LIST_DIR}/game/src/Z.cpp  
+                          ${CMAKE_CURRENT_LIST_DIR}/game/src/tetris.cpp)
 
 target_include_directories(tetris PUBLIC ${CMAKE_CURRENT_LIST_DIR}/engine/include/ 
                                           ${CMAKE_CURRENT_LIST_DIR}/matrix/include/
