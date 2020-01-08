@@ -2,10 +2,10 @@
 
 tetris::O::O()
     : kind{ piece_types::O } {
-    data[0].move_to_coords(1, 1);
-    data[1].move_to_coords(2, 1);
-    data[2].move_to_coords(1, 2);
-    data[3].move_to_coords(2, 2);
+    data[0].move_to_coords(4, 10);
+    data[1].move_to_coords(5, 10);
+    data[2].move_to_coords(4, 11);
+    data[3].move_to_coords(5, 11);
 }
 
 void tetris::O::rotate() {

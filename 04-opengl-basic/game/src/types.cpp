@@ -80,13 +80,13 @@ tetris::tile::tile()
 }
 
 void tetris::tile::rotate() {
-    //auto displacement = calculate_displacement(tetris::zero_vector, position());
-    //apply_matrix(matrix::move({ -displacement.first, -displacement.second }));
-    //apply_matrix(matrix::counter_clockwise_90());
+    // auto displacement = calculate_displacement(tetris::zero_vector,
+    // position()); apply_matrix(matrix::move({ -displacement.first,
+    // -displacement.second })); apply_matrix(matrix::counter_clockwise_90());
     //// each time we rotate a piece we have to scale it because of weird tetris
     //// proporsions
-    //apply_matrix(matrix::scale(2.f, 0.5f));
-    //apply_matrix(matrix::move({ displacement.first, displacement.second }));
+    // apply_matrix(matrix::scale(2.f, 0.5f));
+    // apply_matrix(matrix::move({ displacement.first, displacement.second }));
 }
 
 void tetris::tile::render(eng::engine* k) {
@@ -103,3 +103,8 @@ void tetris::tile::move_to_coords(int x, int y) {
                        displacement.second * singular_displacement.second }));
     coords = { x, y };
 };
+
+void tetris::tile::move_down() {
+    coords.second -= 1;
+    apply_matrix(matrix::move({ 0, -1 * singular_displacement.second }));
+}

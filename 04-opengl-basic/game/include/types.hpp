@@ -45,6 +45,7 @@ public:
     void                    rotate();
     void                    render(eng::engine*);
     void                    move_to_coords(int x, int y);
+    void                    move_down();
     std::pair<int, int>     coords;
     std::pair<float, float> position();
 
@@ -62,8 +63,9 @@ public:
     virtual piece_types                        type()                       = 0;
     virtual void                               rotate()                     = 0;
     virtual void                               move(eng::event)             = 0;
+    virtual void                               move(int x, int y)           = 0;
     virtual std::array<std::pair<int, int>, 4> coords_after_rotation(int i) = 0;
-    virtual std::array<tile, 4>                get_tiles()                  = 0;
+    virtual std::array<tile, 4>&               get_tiles()                  = 0;
     virtual void                               render(eng::engine*)         = 0;
     virtual void                               set_color(color)             = 0;
     virtual ~piece() {}

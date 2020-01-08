@@ -45,7 +45,7 @@ void tetris::game::render_board() {
     if (this->current_piece != nullptr)
         current_piece->render(engine);
 
-    render_grid();
+    // render_grid();
 }
 
 // returns RAW POINTER
@@ -93,9 +93,6 @@ void tetris::game::fixate(tetris::piece* ptr) {
     }
 }
 
-inline bool tetris::game::is_free(int x, int y) {
-    return field[x * y] == nullptr;
-}
 void tetris::game::play() {
     auto time = engine->time_from_init();
     while (!lost) {
@@ -107,27 +104,34 @@ void tetris::game::play() {
                     lost = true;
                     break;
                 case eng::event::w_pressed:
-                    current_piece->rotate();
+                    if (current_piece)
+                        current_piece->rotate();
                     break;
                 case eng::event::s_pressed:
-                    current_piece->move(event);
+                    if (current_piece)
+                        current_piece->move(event);
                     break;
                 case eng::event::d_pressed:
-                    current_piece->move(event);
+                    if (current_piece)
+                        current_piece->move(event);
                     break;
                 case eng::event::a_pressed:
-                    current_piece->move(event);
+                    if (current_piece)
+                        current_piece->move(event);
                     break;
                 default:
                     break;
             }
         }
-        render_board();
-        if(time+step_time < engine->time_from_init()){
-            current_piece->move(eng::event::s_pressed);
+        if (time + step_time < engine->time_from_init()) {
+            if (current_piece)
+                current_piece->move(eng::event::s_pressed);
+
             time = engine->time_from_init();
             // step_time -= 0.0005;
         }
+        clear(0);
+        render_board();
         engine->swap_buffers();
     }
 }
@@ -144,6 +148,7 @@ void tetris::game::round() {
             current_piece = nullptr;
             return;
         }
+
         if ((field.at((tile.coords.first +
                        (state::board_size.first * (tile.coords.second - 1)))) !=
              nullptr)) {
@@ -153,5 +158,51 @@ void tetris::game::round() {
             return;
         }
     }
-    // current_piece->move(eng::event::s_pressed);
+}
+
+void tetris::game::shift_down(int bottom_row) {
+    // for each row
+    for (int i = bottom_row; i < state::board_size.second; i++) {
+        //   for each row cell
+        for (int x = 0; x < state::board_size.first; x++) {
+            // if not empty
+            if (field.at(x + (i * state::board_size.first)) != nullptr) {
+                // move tile coords
+                field.at(x + (i * state::board_size.first))->move_down();
+                // change board coords
+                field.at(x + ((i - 1) * state::board_size.first)) =
+                    new tetris::tile{ *(
+                        field.at(x + (i * state::board_size.first))) };
+                delete field.at(x + (i * state::board_size.first));
+                field.at(x + (i * state::board_size.first)) = nullptr;
+            }
+        }
+    }
+}
+
+bool tetris::game::is_full(int row) {
+    for (int x = 0; x < state::board_size.first; x++) {
+        if (field.at(x + (state::board_size.first * row)) == nullptr)
+            return false;
+    }
+    return true;
+}
+
+void tetris::game::clear_row(int row) {
+    for (int x = 0; x < state::board_size.first; x++) {
+        delete (field.at(x + (x * row)));
+        field.at(x + (x * row)) = nullptr;
+    }
+}
+
+// recursive
+void tetris::game::clear(int row) {
+    for (int i = row; i < state::board_size.second; i++) {
+        if (is_full(i)) {
+            clear_row(i);
+            shift_down(i + 1);
+            clear(i);
+            return;
+        }
+    }
 }
