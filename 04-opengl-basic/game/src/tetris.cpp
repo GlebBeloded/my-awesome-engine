@@ -97,6 +97,7 @@ inline bool tetris::game::is_free(int x, int y) {
     return field[x * y] == nullptr;
 }
 void tetris::game::play() {
+    auto time = engine->time_from_init();
     while (!lost) {
         round();
         eng::event event;
@@ -122,6 +123,11 @@ void tetris::game::play() {
             }
         }
         render_board();
+        if(time+step_time < engine->time_from_init()){
+            current_piece->move(eng::event::s_pressed);
+            time = engine->time_from_init();
+            // step_time -= 0.0005;
+        }
         engine->swap_buffers();
     }
 }

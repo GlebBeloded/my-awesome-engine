@@ -14,7 +14,7 @@ public:
 private:
     void render_grid();
 
-    float                              speed{ 1.0 };
+    float                              step_time{ 1.0 };
     bool                               lost{ false };
     inline bool                        is_free(int, int);
     void                               fixate(piece*);
