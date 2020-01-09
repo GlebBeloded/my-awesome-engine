@@ -2,10 +2,10 @@
 
 tetris::J::J()
     : kind{ piece_types::J } {
-    data[0].move_to_coords(4, 10); // A
-    data[1].move_to_coords(5, 10); // B CENTERPIECE
-    data[2].move_to_coords(6, 10); // C
-    data[3].move_to_coords(6, 11); // D
+    data[0].move_to_coords(4, 20); // A
+    data[1].move_to_coords(5, 20); // B CENTERPIECE
+    data[2].move_to_coords(6, 20); // C
+    data[3].move_to_coords(6, 21); // D
     position_iterator = 0;
 }
 
@@ -73,8 +73,9 @@ void tetris::J::move(int x, int y) {
                            data[3].coords.second + displacement.second);
 }
 
-std::array<std::pair<int, int>, 4> tetris::J::coords_after_rotation(int r) {
-    auto& displacements = rotations[position_iterator % r];
+std::array<std::pair<int, int>, 4> tetris::J::coords_after_rotation() {
+
+    auto displacements = rotations[position_iterator % 4];
 
     return { {
         { data[0].coords.first + displacements[0].first,

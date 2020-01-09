@@ -10,8 +10,7 @@ public:
     virtual void                               rotate() override;
     virtual void                               move(eng::event) override;
     virtual void                               move(int x, int y) override;
-    virtual std::array<std::pair<int, int>, 4> coords_after_rotation(
-        int i) override;
+    virtual std::array<std::pair<int, int>, 4> coords_after_rotation() override;
     virtual std::array<tile, 4>& get_tiles() override { return data; };
     virtual void                 render(eng::engine*) override;
     virtual void                 set_color(color) override;
@@ -28,7 +27,7 @@ public:
     virtual void                               rotate();
     virtual void                               move(eng::event);
     virtual void                               move(int x, int y);
-    virtual std::array<std::pair<int, int>, 4> coords_after_rotation(int i);
+    virtual std::array<std::pair<int, int>, 4> coords_after_rotation();
     virtual std::array<tile, 4>&               get_tiles() { return data; };
     virtual void                               render(eng::engine*);
     virtual void                               set_color(color);
@@ -53,7 +52,7 @@ public:
     virtual void                               rotate();
     virtual void                               move(eng::event);
     virtual void                               move(int x, int y);
-    virtual std::array<std::pair<int, int>, 4> coords_after_rotation(int i);
+    virtual std::array<std::pair<int, int>, 4> coords_after_rotation();
     virtual std::array<tile, 4>&               get_tiles() { return data; };
     virtual void                               render(eng::engine*);
     virtual void                               set_color(color);
@@ -78,7 +77,7 @@ public:
     virtual void                               rotate();
     virtual void                               move(eng::event);
     virtual void                               move(int x, int y);
-    virtual std::array<std::pair<int, int>, 4> coords_after_rotation(int i);
+    virtual std::array<std::pair<int, int>, 4> coords_after_rotation();
     virtual std::array<tile, 4>&               get_tiles() { return data; };
     virtual void                               render(eng::engine*);
     virtual void                               set_color(color);
@@ -103,7 +102,7 @@ public:
     virtual void                               rotate();
     virtual void                               move(eng::event);
     virtual void                               move(int x, int y);
-    virtual std::array<std::pair<int, int>, 4> coords_after_rotation(int i);
+    virtual std::array<std::pair<int, int>, 4> coords_after_rotation();
     virtual std::array<tile, 4>&               get_tiles() { return data; };
     virtual void                               render(eng::engine*);
     virtual void                               set_color(color);
@@ -128,7 +127,7 @@ public:
     virtual void                               rotate();
     virtual void                               move(eng::event);
     virtual void                               move(int x, int y);
-    virtual std::array<std::pair<int, int>, 4> coords_after_rotation(int i);
+    virtual std::array<std::pair<int, int>, 4> coords_after_rotation();
     virtual std::array<tile, 4>&               get_tiles() { return data; };
     virtual void                               render(eng::engine*);
     virtual void                               set_color(color);
@@ -153,7 +152,7 @@ public:
     virtual void                               rotate();
     virtual void                               move(eng::event);
     virtual void                               move(int x, int y);
-    virtual std::array<std::pair<int, int>, 4> coords_after_rotation(int i);
+    virtual std::array<std::pair<int, int>, 4> coords_after_rotation();
     virtual std::array<tile, 4>&               get_tiles() { return data; };
     virtual void                               render(eng::engine*);
     virtual void                               set_color(color);

@@ -5,10 +5,8 @@
 #include <random>
 
 tetris::game::game(std::random_device& seed, eng::engine* e)
-    : random_engine{}
-    , engine{ e } {
-    random_engine.seed();
-}
+    : random_engine{ seed() }
+    , engine{ e } {}
 
 void tetris::game::render_grid() {
 
@@ -96,7 +94,7 @@ void tetris::game::fixate(tetris::piece* ptr) {
 void tetris::game::play() {
     auto time = engine->time_from_init();
     while (!lost) {
-        round();
+        // round();
         eng::event event;
         while (engine->read_input(event)) {
             switch (event) {
@@ -104,31 +102,49 @@ void tetris::game::play() {
                     lost = true;
                     break;
                 case eng::event::w_pressed:
-                    if (current_piece)
+                    if (current_piece) {
+                        auto tiles{ current_piece->coords_after_rotation() };
+                        for (const auto& tile : tiles) {
+                            if (!within_filed(tile.first, tile.second))
+                                goto exit;
+                            if (get_tile(tile.first, tile.second) != nullptr)
+                                goto exit;
+                        }
                         current_piece->rotate();
+                    }
                     break;
                 case eng::event::s_pressed:
-                    if (current_piece)
-                        current_piece->move(event);
+                    if (current_piece) {
+                        if (movable(current_piece, { 0, -1 }))
+                            current_piece->move(event);
+                    }
                     break;
                 case eng::event::d_pressed:
-                    if (current_piece)
-                        current_piece->move(event);
-                    break;
-                case eng::event::a_pressed:
-                    if (current_piece)
-                        current_piece->move(event);
-                    break;
+                    if (current_piece) {
+                        if (current_piece) {
+                            if (movable(current_piece, { 1, 0 }))
+                                current_piece->move(event);
+                        }
+                        break;
+                        case eng::event::a_pressed:
+                            if (current_piece) {
+                                if (movable(current_piece, { -1, 0 }))
+                                    current_piece->move(event);
+                            }
+                            break;
+                    }
                 default:
+                exit:
                     break;
             }
         }
         if (time + step_time < engine->time_from_init()) {
-            if (current_piece)
-                current_piece->move(eng::event::s_pressed);
-
             time = engine->time_from_init();
-            // step_time -= 0.0005;
+            round();
+            if (current_piece) {
+                if (movable(current_piece, { 0, -1 }))
+                    current_piece->move(eng::event::s_pressed);
+            }
         }
         clear(0);
         render_board();
@@ -190,8 +206,8 @@ bool tetris::game::is_full(int row) {
 
 void tetris::game::clear_row(int row) {
     for (int x = 0; x < state::board_size.first; x++) {
-        delete (field.at(x + (x * row)));
-        field.at(x + (x * row)) = nullptr;
+        delete (field.at(x + (state::board_size.first * row)));
+        field.at(x + (state::board_size.first * row)) = nullptr;
     }
 }
 
@@ -205,4 +221,21 @@ void tetris::game::clear(int row) {
             return;
         }
     }
+}
+
+tetris::tile*& tetris::game::get_tile(int x, int y) {
+    return field.at(x + (y * state::board_size.first));
+}
+
+bool tetris::game::movable(tetris::piece*&            piece,
+                           const std::pair<int, int>& displacement) {
+    for (auto& tile : piece->get_tiles()) {
+        if (!within_filed(tile.coords.first + displacement.first,
+                          tile.coords.second + displacement.second))
+            return false;
+        if (get_tile(tile.coords.first + displacement.first,
+                     tile.coords.second + displacement.second) != nullptr)
+            return false;
+    }
+    return true;
 }

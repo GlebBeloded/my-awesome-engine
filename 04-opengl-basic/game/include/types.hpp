@@ -60,14 +60,14 @@ class piece {
 
 public:
     piece(){};
-    virtual piece_types                        type()                       = 0;
-    virtual void                               rotate()                     = 0;
-    virtual void                               move(eng::event)             = 0;
-    virtual void                               move(int x, int y)           = 0;
-    virtual std::array<std::pair<int, int>, 4> coords_after_rotation(int i) = 0;
-    virtual std::array<tile, 4>&               get_tiles()                  = 0;
-    virtual void                               render(eng::engine*)         = 0;
-    virtual void                               set_color(color)             = 0;
+    virtual piece_types                        type()                  = 0;
+    virtual void                               rotate()                = 0;
+    virtual void                               move(eng::event)        = 0;
+    virtual void                               move(int x, int y)      = 0;
+    virtual std::array<std::pair<int, int>, 4> coords_after_rotation() = 0;
+    virtual std::array<tile, 4>&               get_tiles()             = 0;
+    virtual void                               render(eng::engine*)    = 0;
+    virtual void                               set_color(color)        = 0;
     virtual ~piece() {}
 };
 

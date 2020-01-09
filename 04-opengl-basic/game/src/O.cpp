@@ -2,10 +2,10 @@
 
 tetris::O::O()
     : kind{ piece_types::O } {
-    data[0].move_to_coords(4, 10);
-    data[1].move_to_coords(5, 10);
-    data[2].move_to_coords(4, 11);
-    data[3].move_to_coords(5, 11);
+    data[0].move_to_coords(4, 20);
+    data[1].move_to_coords(5, 20);
+    data[2].move_to_coords(4, 21);
+    data[3].move_to_coords(5, 21);
 }
 
 void tetris::O::rotate() {
@@ -52,7 +52,7 @@ void tetris::O::move(int x, int y) {
     data[3].move_to_coords(x + 1, y + 1);
 }
 
-std::array<std::pair<int, int>, 4> tetris::O::coords_after_rotation(int) {
+std::array<std::pair<int, int>, 4> tetris::O::coords_after_rotation() {
     return { {
         { data[0].coords.first, data[0].coords.second },
         { data[1].coords.first, data[1].coords.second },

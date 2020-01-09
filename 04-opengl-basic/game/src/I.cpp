@@ -2,10 +2,10 @@
 
 tetris::I::I()
     : kind{ piece_types::I } {
-    data[0].move_to_coords(3, 10); // A
-    data[1].move_to_coords(4, 10); // B
-    data[2].move_to_coords(5, 10); // C
-    data[3].move_to_coords(6, 10); // D
+    data[0].move_to_coords(3, 20); // A
+    data[1].move_to_coords(4, 20); // B
+    data[2].move_to_coords(5, 20); // C
+    data[3].move_to_coords(6, 20); // D
     position_iterator = 0;
 }
 
@@ -73,9 +73,9 @@ void tetris::I::move(int x, int y) {
                            data[3].coords.second + displacement.second);
 }
 
-std::array<std::pair<int, int>, 4> tetris::I::coords_after_rotation(int r) {
+std::array<std::pair<int, int>, 4> tetris::I::coords_after_rotation() {
 
-    auto& displacements = rotations[position_iterator % r];
+    auto& displacements = rotations[position_iterator % 4];
 
     return { {
         { data[0].coords.first + displacements[0].first,
