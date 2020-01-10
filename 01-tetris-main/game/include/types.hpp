@@ -43,7 +43,7 @@ public:
     void set_color(color col);
     // only rotates texture
     void                                rotate();
-    void                                render(eng::engine*);
+    void                                render(eng::engine*) const;
     void                                move_to_coords(int x, int y);
     void                                move_down();
     std::pair<int, int>                 coords;

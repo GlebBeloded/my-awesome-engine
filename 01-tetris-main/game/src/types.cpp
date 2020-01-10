@@ -89,7 +89,7 @@ void tetris::tile::rotate() {
     // apply_matrix(matrix::move({ displacement.first, displacement.second }));
 }
 
-void tetris::tile::render(eng::engine* k) {
+void tetris::tile::render(eng::engine* k) const {
     k->render_triangle(data.at(0));
     k->render_triangle(data.at(1));
 }
@@ -109,7 +109,8 @@ void tetris::tile::move_down() {
     apply_matrix(matrix::move({ 0, -1 * singular_displacement.second }));
 }
 
-tetris::tile lerp(const tetris::tile& a, const tetris::tile& b, float alpha) {
+namespace tetris {
+tile lerp(const tile& a, const tile& b, float alpha) {
     std::array<eng::triangle, 2> res;
     res[0] = eng::blend(a.get_data()[0], b.get_data()[0], alpha);
     res[1] = eng::blend(a.get_data()[1], b.get_data()[1], alpha);
@@ -117,3 +118,4 @@ tetris::tile lerp(const tetris::tile& a, const tetris::tile& b, float alpha) {
     output.set_data(res);
     return output;
 }
+} // namespace tetris

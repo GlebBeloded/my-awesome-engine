@@ -4,6 +4,73 @@
 #include "types.hpp"
 #include <random>
 
+float normalize(const float& min, const float& max,
+                const float& current_value) {
+    return (current_value - min) / (max - min);
+}
+
+int get_field_index(int x, int y) {
+    return x + (y * state::board_size.first);
+}
+
+void tetris::render_state::render(eng::engine* e, float time) {
+    float alpha = normalize(begin_time, end_time, time);
+    if (alpha > 1.0) {
+        alpha    = 1.0;
+        finished = true;
+    }
+    for (const auto& [key, value] : full_state) {
+
+        if (rows_to_delete[key])
+            continue;
+        if (key < threshhold_value)
+            value.render(e);
+        if (key >= threshhold_value) {
+            auto moved{ value };
+            moved.move_to_coords(value.coords.first,
+                                 value.coords.second - rows_destroyed);
+            lerp(value, moved, alpha).render(e);
+        }
+    }
+}
+
+void tetris::render_state::initialize(float b, float e) {
+    if (initialized == true)
+        throw std::logic_error("render process already taking place");
+    begin_time  = b;
+    end_time    = e;
+    initialized = true;
+    finished    = false;
+}
+
+void tetris::render_state::reset() {
+    initialized = false;
+    for (const auto& [key, val] : rows_to_delete) {
+        if (val)
+            full_state.erase(key);
+    }
+    // move all tyles n rows lower
+    std::vector<int> invalid_indexes;
+    for (auto& [key, value] : full_state) {
+        if (key >= threshhold_value) {
+            value.move_to_coords(value.coords.first,
+                                 value.coords.second - rows_destroyed);
+            full_state[get_field_index(value.coords.first,
+                                       value.coords.second)] = value;
+            invalid_indexes.push_back(key);
+        }
+    }
+    // for (const auto& index : invalid_indexes) {
+    // full_state.erase(index);
+    // }
+
+    threshhold_value = state::board_size.first * (state::board_size.second + 5);
+    finished         = false;
+    rows_destroyed   = 0;
+
+    rows_to_delete.clear();
+}
+
 tetris::game::game(std::random_device& seed, eng::engine* e)
     : random_engine{ seed() }
     , engine{ e } {}
@@ -86,7 +153,8 @@ void tetris::game::fixate(tetris::piece* ptr) {
     for (auto p : ptr->get_tiles()) {
         field[(p.coords.first + (state::board_size.first * p.coords.second))] =
             new tile{ p };
-        if (p.coords.second > 20)
+        rstate.full_state[get_field_index(p.coords.first, p.coords.second)] = p;
+        if (p.coords.second > state::board_size.second)
             lost = true;
     }
 }
@@ -147,6 +215,23 @@ void tetris::game::play() {
             }
         }
         clear(0);
+
+        // NEW RENDERER(with bugs)
+        // if (rstate.rows_destroyed > 0) {
+        //     if (!rstate.initialized) {
+        //         rstate.initialize(engine->time_from_init(),
+        //                           engine->time_from_init() + step_time);
+        //         rstate.render(engine, engine->time_from_init());
+        //     }
+        //     if (current_piece)
+        //         current_piece->render(engine);
+        // }
+        // if (rstate.rows_destroyed > 0 && rstate.finished)
+        //     rstate.reset();
+
+        // if (current_piece)
+        //     current_piece->render(engine);
+        // rstate.render(engine, engine->time_from_init());
         render_board();
         engine->swap_buffers();
     }
@@ -205,7 +290,16 @@ bool tetris::game::is_full(int row) {
 }
 
 void tetris::game::clear_row(int row) {
+    if (rstate.initialized)
+        throw std::logic_error(
+            "rows removed before previous animation has finished");
+    // lower threshold above which tiles should be interpolated if needed
+    if (rstate.threshhold_value > get_field_index(0, row))
+        rstate.threshhold_value = get_field_index(0, row);
+    // increment -y displacement to render
+    rstate.rows_destroyed++;
     for (int x = 0; x < state::board_size.first; x++) {
+        rstate.rows_to_delete[get_field_index(x, row)] = true;
         delete (field.at(x + (state::board_size.first * row)));
         field.at(x + (state::board_size.first * row)) = nullptr;
     }
