@@ -42,12 +42,16 @@ public:
     void apply_matrix(const matrix::matrix& m);
     void set_color(color col);
     // only rotates texture
-    void                    rotate();
-    void                    render(eng::engine*);
-    void                    move_to_coords(int x, int y);
-    void                    move_down();
-    std::pair<int, int>     coords;
-    std::pair<float, float> position();
+    void                                rotate();
+    void                                render(eng::engine*);
+    void                                move_to_coords(int x, int y);
+    void                                move_down();
+    std::pair<int, int>                 coords;
+    std::pair<float, float>             position();
+    const std::array<eng::triangle, 2>& get_data() const { return data; }
+    void set_data(const std::array<eng::triangle, 2>& _data) {
+        this->data = _data;
+    }
 
 private:
     void                         init_tex_coord();
@@ -55,6 +59,8 @@ private:
     eng::rgb                     color;
     std::array<eng::triangle, 2> data;
 };
+
+tile lerp(const tile& a, const tile& b, float alpha);
 
 class piece {
 

@@ -33,6 +33,11 @@ private:
     std::uniform_int_distribution<int> color_distribution{ 0,
                                                            colors.size() - 1 };
     std::array<tile*, state::board_size.first*(state::board_size.second + 5)>
-        field{ nullptr };
+                      field{ nullptr };
+    std::vector<tile> current_state;
+    std::vector<tile> previous_state;
 };
+
+std::vector<tile> lerp(const std::vector<tile>& a, const std::vector<tile>& b,
+                       float alpha);
 } // namespace tetris

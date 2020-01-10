@@ -108,3 +108,12 @@ void tetris::tile::move_down() {
     coords.second -= 1;
     apply_matrix(matrix::move({ 0, -1 * singular_displacement.second }));
 }
+
+tetris::tile lerp(const tetris::tile& a, const tetris::tile& b, float alpha) {
+    std::array<eng::triangle, 2> res;
+    res[0] = eng::blend(a.get_data()[0], b.get_data()[0], alpha);
+    res[1] = eng::blend(a.get_data()[1], b.get_data()[1], alpha);
+    tetris::tile output{ a };
+    output.set_data(res);
+    return output;
+}

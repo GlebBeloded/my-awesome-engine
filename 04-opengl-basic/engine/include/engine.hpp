@@ -67,5 +67,6 @@ public:
     virtual ~engine(){};
 };
 
-engine* new_sdl_engine(const std::filesystem::path& game_path);
+engine*  new_sdl_engine(const std::filesystem::path& game_path);
+triangle blend(const triangle& tl, const triangle& tr, const float a);
 } // namespace eng
