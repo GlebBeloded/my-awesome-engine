@@ -51,8 +51,32 @@ void gl_error_check() {
         assert(false);
     }
 }
-
 namespace eng {
+
+static std::string_view get_sound_format_name(uint16_t format_value) {
+    static const std::map<int, std::string_view> format = {
+        { AUDIO_U8, "AUDIO_U8" },         { AUDIO_S8, "AUDIO_S8" },
+        { AUDIO_U16LSB, "AUDIO_U16LSB" }, { AUDIO_S16LSB, "AUDIO_S16LSB" },
+        { AUDIO_U16MSB, "AUDIO_U16MSB" }, { AUDIO_S16MSB, "AUDIO_S16MSB" },
+        { AUDIO_S32LSB, "AUDIO_S32LSB" }, { AUDIO_S32MSB, "AUDIO_S32MSB" },
+        { AUDIO_F32LSB, "AUDIO_F32LSB" }, { AUDIO_F32MSB, "AUDIO_F32MSB" },
+    };
+
+    auto it = format.find(format_value);
+    return it->second;
+}
+
+static std::size_t get_sound_format_size(uint16_t format_value) {
+    static const std::map<int, std::size_t> format = {
+        { AUDIO_U8, 1 },     { AUDIO_S8, 1 },     { AUDIO_U16LSB, 2 },
+        { AUDIO_S16LSB, 2 }, { AUDIO_U16MSB, 2 }, { AUDIO_S16MSB, 2 },
+        { AUDIO_S32LSB, 4 }, { AUDIO_S32MSB, 4 }, { AUDIO_F32LSB, 4 },
+        { AUDIO_F32MSB, 4 },
+    };
+
+    auto it = format.find(format_value);
+    return it->second;
+}
 
 template <typename T>
 T lerp(T a, T b, float t) {
@@ -150,6 +174,107 @@ static bool check_input(const SDL_Event& e, const binding*& result) {
     return false;
 }
 
+class sound_buffer_impl final : public sound_buffer {
+public:
+    sound_buffer_impl(std::string_view path, SDL_AudioDeviceID device,
+                      SDL_AudioSpec audio_spec);
+    ~sound_buffer_impl() final;
+
+    void play(const properties prop) final {
+        // Lock callback function
+        SDL_LockAudioDevice(device);
+
+        // here we can change properties
+        // of sound and dont collade with multithreaded playing
+        current_index = 0;
+        is_playing    = true;
+        is_looped     = (prop == properties::looped);
+
+        // unlock callback for continue mixing of audio
+        SDL_UnlockAudioDevice(device);
+    }
+
+    std::unique_ptr<uint8_t[]> tmp_buf;
+    uint8_t*                   buffer;
+    uint32_t                   length;
+    uint32_t                   current_index = 0;
+    SDL_AudioDeviceID          device;
+    bool                       is_playing = false;
+    bool                       is_looped  = false;
+};
+
+sound_buffer_impl::sound_buffer_impl(std::string_view  path,
+                                     SDL_AudioDeviceID device_,
+                                     SDL_AudioSpec     device_audio_spec)
+    : buffer(nullptr)
+    , length(0)
+    , device(device_) {
+    SDL_RWops* file = SDL_RWFromFile(path.data(), "rb");
+    if (file == nullptr) {
+        throw std::runtime_error(std::string("can't open audio file: ") +
+                                 path.data());
+    }
+
+    // freq, format, channels, and samples - used by SDL_LoadWAV_RW
+    SDL_AudioSpec file_audio_spec;
+
+    if (nullptr ==
+        SDL_LoadWAV_RW(file, 1, &file_audio_spec, &buffer, &length)) {
+        throw std::runtime_error(std::string("can't load wav: ") + path.data());
+    }
+
+    std::cout << "audio format for: " << path << '\n'
+              << "format: " << get_sound_format_name(file_audio_spec.format)
+              << '\n'
+              << "sample_size: "
+              << get_sound_format_size(file_audio_spec.format) << '\n'
+              << "channels: " << static_cast<uint32_t>(file_audio_spec.channels)
+              << '\n'
+              << "frequency: " << file_audio_spec.freq << '\n'
+              << "length: " << length << '\n'
+              << "time: "
+              << static_cast<double>(length) /
+                     (file_audio_spec.channels * file_audio_spec.freq *
+                      get_sound_format_size(file_audio_spec.format))
+              << "sec" << std::endl;
+
+    if (file_audio_spec.channels != device_audio_spec.channels ||
+        file_audio_spec.format != device_audio_spec.format ||
+        file_audio_spec.freq != device_audio_spec.freq) {
+        SDL_AudioCVT cvt;
+        SDL_BuildAudioCVT(&cvt, file_audio_spec.format,
+                          file_audio_spec.channels, file_audio_spec.freq,
+                          device_audio_spec.format, device_audio_spec.channels,
+                          device_audio_spec.freq);
+        SDL_assert(cvt.needed); // obviously, this one is always needed.
+        // read your data into cvt.buf here.
+        cvt.len = length;
+        // we have to make buffer for inplace conversion
+        tmp_buf.reset(new uint8_t[cvt.len * cvt.len_mult]);
+        uint8_t* buf = tmp_buf.get();
+        std::copy_n(buffer, length, buf);
+        cvt.buf = buf;
+        if (0 != SDL_ConvertAudio(&cvt)) {
+            std::cout << "failed to convert audio from file: " << path
+                      << " to audio device format" << std::endl;
+        }
+        // cvt.buf has cvt.len_cvt bytes of converted data now.
+        SDL_FreeWAV(buffer);
+        buffer = tmp_buf.get();
+        length = cvt.len_cvt;
+    }
+}
+
+sound_buffer::~sound_buffer() {}
+
+sound_buffer_impl::~sound_buffer_impl() {
+    if (!tmp_buf) {
+        SDL_FreeWAV(buffer);
+    }
+    buffer = nullptr;
+    length = 0;
+}
+
 class sdl_engine final : public engine {
 public:
     sdl_engine(const std::filesystem::path& game_path);
@@ -162,17 +287,77 @@ public:
     uint  load_texture(std::string_view path, int width, int height,
                        int nrChannels, int texture_mode) override;
 
+    virtual sound_buffer*           create_sound_buffer(std::string_view path);
+    virtual void                    destroy_sound_buffer(sound_buffer*);
+    std::vector<sound_buffer_impl*> sounds;
+
 private:
+    static void   audio_callback(void*, uint8_t*, int);
     SDL_GLContext gl_context = nullptr;
     // map of strings mapped to the program IDs
     std::map<std::string, GLuint> shaders;
     SDL_Window*                   window = nullptr;
 
     void init_SDL();
+    void init_SDL_audio();
+
+    SDL_AudioDeviceID audio_device;
+    SDL_AudioSpec     audio_device_spec;
 };
 
 engine* new_sdl_engine(const std::filesystem::path& game_path) {
     return new sdl_engine(game_path);
+}
+
+void sdl_engine::init_SDL_audio() {
+
+    audio_device_spec.freq     = 48000;
+    audio_device_spec.format   = AUDIO_S16LSB;
+    audio_device_spec.channels = 2;
+    audio_device_spec.samples  = 1024; // must be power of 2
+    audio_device_spec.callback = sdl_engine::audio_callback;
+    audio_device_spec.userdata = this;
+
+    const int num_audio_drivers = SDL_GetNumAudioDrivers();
+    for (int i = 0; i < num_audio_drivers; ++i) {
+        std::cout << "audio_driver #:" << i << " " << SDL_GetAudioDriver(i)
+                  << '\n';
+    }
+    std::cout << std::flush;
+
+    const char* default_audio_device_name = nullptr;
+
+    const int num_audio_devices = SDL_GetNumAudioDevices(SDL_FALSE);
+    if (num_audio_devices > 0) {
+        default_audio_device_name = SDL_GetAudioDeviceName(0, SDL_FALSE);
+        for (int i = 0; i < num_audio_devices; ++i) {
+            std::cout << "audio device #" << i << ": "
+                      << SDL_GetAudioDeviceName(i, SDL_FALSE) << '\n';
+        }
+    }
+    std::cout << std::flush;
+
+    audio_device =
+        SDL_OpenAudioDevice(default_audio_device_name, 0, &audio_device_spec,
+                            nullptr, SDL_AUDIO_ALLOW_ANY_CHANGE);
+
+    if (audio_device == 0) {
+        std::cerr << "failed open audio device: " << SDL_GetError();
+        throw std::runtime_error("audio failed");
+    } else {
+        std::cout << "audio device selected: " << default_audio_device_name
+                  << '\n'
+                  << "freq: " << audio_device_spec.freq << '\n'
+                  << "format: "
+                  << get_sound_format_name(audio_device_spec.format) << '\n'
+                  << "channels: "
+                  << static_cast<uint32_t>(audio_device_spec.channels) << '\n'
+                  << "samples: " << audio_device_spec.samples << '\n'
+                  << std::flush;
+
+        // unpause device
+        SDL_PauseAudioDevice(audio_device, SDL_FALSE);
+    }
 }
 
 void sdl_engine::init_SDL() {
@@ -246,6 +431,8 @@ sdl_engine::sdl_engine(const std::filesystem::path& game_path) {
 
     // Create SDL window with opengl context
     init_SDL();
+
+    init_SDL_audio();
 
     // Get opengl functions from GLAD
     if (gladLoadGLES2Loader(SDL_GL_GetProcAddress) == 0) {
@@ -460,4 +647,55 @@ uint sdl_engine::load_texture(std::string_view path, int width, int height,
 
     return texture;
 }
+
+sound_buffer* sdl_engine::create_sound_buffer(std::string_view path) {
+    SDL_LockAudioDevice(audio_device); // TODO fix lock only push_back
+    sound_buffer_impl* s =
+        new sound_buffer_impl(path, audio_device, audio_device_spec);
+    sounds.push_back(s);
+    SDL_UnlockAudioDevice(audio_device);
+    return s;
+}
+void sdl_engine::destroy_sound_buffer(sound_buffer* sound) {
+    // TODO FIXME first remove from sounds collection
+    delete sound;
+}
+
+void sdl_engine::audio_callback(void* engine_ptr, uint8_t* stream,
+                                int stream_size) {
+    // no sound default
+    std::fill_n(stream, stream_size, '\0');
+
+    sdl_engine* e = static_cast<sdl_engine*>(engine_ptr);
+
+    for (sound_buffer_impl* snd : e->sounds) {
+        if (snd->is_playing) {
+            uint32_t rest         = snd->length - snd->current_index;
+            uint8_t* current_buff = &snd->buffer[snd->current_index];
+
+            if (rest <= static_cast<uint32_t>(stream_size)) {
+                // copy rest to buffer
+                SDL_MixAudioFormat(stream, current_buff,
+                                   e->audio_device_spec.format, rest,
+                                   SDL_MIX_MAXVOLUME);
+                snd->current_index += rest;
+            } else {
+                SDL_MixAudioFormat(
+                    stream, current_buff, e->audio_device_spec.format,
+                    static_cast<uint32_t>(stream_size), SDL_MIX_MAXVOLUME);
+                snd->current_index += static_cast<uint32_t>(stream_size);
+            }
+
+            if (snd->current_index == snd->length) {
+                if (snd->is_looped) {
+                    // start from begining
+                    snd->current_index = 0;
+                } else {
+                    snd->is_playing = false;
+                }
+            }
+        }
+    }
+}
+
 } // namespace eng

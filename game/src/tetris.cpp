@@ -1,13 +1,29 @@
 #include "tetris.hpp"
+#include "glad.h"
 #include "pieces.hpp"
 #include "state.hpp"
 #include "types.hpp"
 #include <random>
 #include <set>
 
-tetris::game::game(std::random_device& seed, eng::engine* e)
+tetris::game::game(std::random_device& seed, eng::engine* e,
+                   const std::filesystem::path& path)
     : random_engine{ seed() }
-    , engine{ e } {}
+    , engine{ e } {
+
+    e->load_texture((path / "textures" / "square.png").string(), 256, 256, 4,
+                    GL_LUMINANCE);
+    sounds["rotate"].reset(
+        e->create_sound_buffer((path / "sounds" / "whoosh.wav").string()));
+    sounds["start"].reset(
+        e->create_sound_buffer((path / "sounds" / "start.wav").string()));
+    sounds["move"].reset(
+        e->create_sound_buffer((path / "sounds" / "move.wav").string()));
+    sounds["clear"].reset(
+        e->create_sound_buffer((path / "sounds" / "clear_row.wav").string()));
+    sounds["automove"].reset(
+        e->create_sound_buffer((path / "sounds" / "auto_move.wav").string()));
+}
 
 void tetris::game::render_grid() {
 
@@ -107,8 +123,8 @@ void tetris::game::fixate(tetris::piece* ptr) {
 
 void tetris::game::play() {
     auto time = engine->time_from_init();
+    sounds["start"]->play(eng::sound_buffer::properties::once);
     while (!lost) {
-        // round();
         eng::event event;
         while (engine->read_input(event)) {
             switch (event) {
@@ -124,26 +140,37 @@ void tetris::game::play() {
                             if (get_tile(tile.first, tile.second) != nullptr)
                                 goto exit;
                         }
+                        sounds["rotate"]->play(
+                            eng::sound_buffer::properties::once);
                         current_piece->rotate();
                     }
                     break;
                 case eng::event::s_pressed:
                     if (current_piece) {
-                        if (movable(current_piece, { 0, -1 }))
+                        if (movable(current_piece, { 0, -1 })) {
                             current_piece->move(event);
+                            // sounds["move"]->play(
+                            //     eng::sound_buffer::properties::once);
+                        }
                     }
                     break;
                 case eng::event::d_pressed:
                     if (current_piece) {
                         if (current_piece) {
-                            if (movable(current_piece, { 1, 0 }))
+                            if (movable(current_piece, { 1, 0 })) {
                                 current_piece->move(event);
+                                // sounds["move"]->play(
+                                //     eng::sound_buffer::properties::once);
+                            }
                         }
                         break;
                         case eng::event::a_pressed:
                             if (current_piece) {
-                                if (movable(current_piece, { -1, 0 }))
+                                if (movable(current_piece, { -1, 0 })) {
                                     current_piece->move(event);
+                                    // sounds["move"]->play(
+                                    // eng::sound_buffer::properties::once);
+                                }
                             }
                             break;
                     }
@@ -156,16 +183,20 @@ void tetris::game::play() {
             time = engine->time_from_init();
             round();
             if (current_piece) {
-                if (movable(current_piece, { 0, -1 }))
+                if (movable(current_piece, { 0, -1 })) {
                     current_piece->move(eng::event::s_pressed);
+                    sounds["move"]->play(eng::sound_buffer::properties::once);
+                }
             }
         }
         // clear bord if any row is full
         clear(0);
+        if (rstate.rows_destroyed > 0)
+            sounds["clear"]->play(eng::sound_buffer::properties::once);
         render_board();
 
         score.update();
-        step_time = 0.8 - (0.1 * score.level) - 0.1;
+        step_time = 1.0 - (0.1 * score.level) - 0.1;
     }
     std::cout << "score: " << score.score << '\n'
               << "level: " << score.level << '\n';

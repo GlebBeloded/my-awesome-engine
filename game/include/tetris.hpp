@@ -45,7 +45,7 @@ int get_field_index(int x, int y);
 
 class game {
 public:
-    game(std::random_device&, eng::engine*);
+    game(std::random_device&, eng::engine*, const std::filesystem::path&);
     void play();
 
 private:
@@ -71,13 +71,13 @@ private:
     std::uniform_int_distribution<int> color_distribution{ 0,
                                                            colors.size() - 1 };
     std::array<tile*, state::board_size.first*(state::board_size.second + 5)>
-        field{ nullptr };
-
-    bool         lost{ false };
-    float        step_time{ 1.0 };
-    render_state rstate{};
-    int          rows_destroyed{ 0 };
-    game_logic   score{};
+                                                              field{ nullptr };
+    std::map<std::string, std::unique_ptr<eng::sound_buffer>> sounds;
+    bool                                                      lost{ false };
+    float                                                     step_time{ 1.0 };
+    render_state                                              rstate{};
+    int        rows_destroyed{ 0 };
+    game_logic score{};
 };
 
 std::vector<tile> lerp(const std::vector<tile>& a, const std::vector<tile>& b,

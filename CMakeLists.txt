@@ -47,7 +47,8 @@ add_library(tetris SHARED ${CMAKE_CURRENT_LIST_DIR}/game/src/types.cpp
 
 target_include_directories(tetris PUBLIC ${CMAKE_CURRENT_LIST_DIR}/engine/include/ 
                                           ${CMAKE_CURRENT_LIST_DIR}/matrix/include/
-                                          ${CMAKE_CURRENT_LIST_DIR}/game/include/)
+                                          ${CMAKE_CURRENT_LIST_DIR}/game/include/
+                                          ${CMAKE_CURRENT_LIST_DIR}/openGL/include/)
 
 
 target_compile_features(tetris PUBLIC cxx_std_17)
@@ -63,3 +64,4 @@ install(TARGETS matrix openGL engine game tetris)
 
 file(COPY ${CMAKE_CURRENT_LIST_DIR}/data/shaders/ DESTINATION ${CMAKE_BINARY_DIR}/shaders)
 file(COPY ${CMAKE_CURRENT_LIST_DIR}/data/textures/ DESTINATION ${CMAKE_BINARY_DIR}/textures)
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/data/sounds/ DESTINATION ${CMAKE_BINARY_DIR}/sounds)

@@ -52,6 +52,13 @@ std::istream& operator>>(std::istream& is, triangle&);
 
 std::ostream& operator<<(std::ostream& stream, const event e);
 
+class sound_buffer {
+public:
+    enum class properties { once, looped };
+    virtual ~sound_buffer();
+    virtual void play(const properties) = 0;
+};
+
 class engine {
 public:
     /// pool event from input queue
@@ -64,9 +71,13 @@ public:
     virtual uint  load_texture(std::string_view path, int width, int height,
                                int nrChannels, int texture_mode) = 0;
 
+    virtual sound_buffer* create_sound_buffer(std::string_view path) = 0;
+    virtual void          destroy_sound_buffer(sound_buffer*)        = 0;
+
     virtual ~engine(){};
 };
 
 engine*  new_sdl_engine(const std::filesystem::path& game_path);
 triangle blend(const triangle& tl, const triangle& tr, const float a);
+
 } // namespace eng

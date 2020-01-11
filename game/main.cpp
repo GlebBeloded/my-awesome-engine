@@ -22,12 +22,8 @@ int main(int /*argc*/, char* argv[]) {
     // create engine
     std::unique_ptr<eng::engine> engine(eng::new_sdl_engine(game_dir));
 
-    // load texture
-    engine->load_texture((game_dir / "textures" / "square.png").string(), 256,
-                         256, 4, GL_LUMINANCE);
-
     std::random_device rdevice{};
-    tetris::game       tetris{ rdevice, engine.get() };
+    tetris::game       tetris{ rdevice, engine.get(), game_dir };
 
     tetris.play();
 
