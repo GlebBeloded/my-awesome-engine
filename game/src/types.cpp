@@ -102,7 +102,7 @@ void tetris::tile::move_to_coords(int x, int y) {
         matrix::move({ displacement.first * singular_displacement.first,
                        displacement.second * singular_displacement.second }));
     coords = { x, y };
-};
+}
 
 void tetris::tile::move_down() {
     coords.second -= 1;

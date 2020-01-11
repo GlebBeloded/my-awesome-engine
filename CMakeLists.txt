@@ -5,6 +5,12 @@ add_library(matrix SHARED ${CMAKE_CURRENT_LIST_DIR}/matrix/src/matrix.cpp)
 target_include_directories(matrix PUBLIC ${CMAKE_CURRENT_LIST_DIR}/matrix/include/)
 target_compile_features(matrix PUBLIC cxx_std_17)
 
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -Wall -Wextra -pedantic -Werror")
+endif()
 
 add_library(openGL SHARED ${CMAKE_CURRENT_LIST_DIR}/openGL/src/glad.c)
 

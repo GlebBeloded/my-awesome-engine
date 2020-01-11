@@ -60,8 +60,8 @@ private:
     void         round();
     bool         movable(piece*&, const std::pair<int, int>& displacement);
     void         fixate(piece*);
-    eng::engine* engine;
     std::mt19937 random_engine;
+    eng::engine* engine;
     void         shift_down(int bottom_row);
     void         clear(int row);
     void         clear_row(int row);

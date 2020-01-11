@@ -22,27 +22,26 @@ void tetris::O::render(eng::engine* e) {
 
 void tetris::O::move(eng::event e) {
     switch (e) {
-        case eng::event::a_pressed: {
+        case eng::event::a_pressed:
             for (auto& tile : data) {
                 tile.apply_matrix(tetris::move_left);
                 tile.coords.first -= 1;
             }
             break;
-            case eng::event::d_pressed: {
-                for (auto& tile : data) {
-                    tile.apply_matrix(tetris::move_right);
-                    tile.coords.first += 1;
-                }
-                break;
-                case eng::event::s_pressed: {
-                    for (auto& tile : data) {
-                        tile.apply_matrix(tetris::move_down);
-                        tile.coords.second -= 1;
-                    }
-                    break;
-                }
+        case eng::event::d_pressed:
+            for (auto& tile : data) {
+                tile.apply_matrix(tetris::move_right);
+                tile.coords.first += 1;
             }
-        }
+            break;
+        case eng::event::s_pressed:
+            for (auto& tile : data) {
+                tile.apply_matrix(tetris::move_down);
+                tile.coords.second -= 1;
+            }
+            break;
+        default:
+            break;
     }
 }
 void tetris::O::move(int x, int y) {

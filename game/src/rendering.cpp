@@ -41,7 +41,7 @@ std::vector<tile> lerp(const std::vector<tile>& a, const std::vector<tile>& b,
         throw std::logic_error("cannot interpolate uneven number of objects");
     }
     std::vector<tile> result(a.size());
-    for (auto i = 0; i < a.size(); i++) {
+    for (size_t i = 0; i < a.size(); i++) {
         result[i] = lerp(a[i], b[i], alpha);
     }
     return result;

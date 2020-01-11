@@ -41,7 +41,6 @@ GLuint comiple_fragment_shader(std::ifstream& shader) {
 
     glShaderSource(fragment_shader, 1, &source, nullptr);
     gl_error_check();
-    char* check = new char[500];
 
     glCompileShader(fragment_shader);
     gl_error_check();
@@ -100,7 +99,7 @@ GLuint create_shader_program(std::filesystem::path                vertex,
     gl_error_check();
 
     // bind attribute location
-    for (auto i = 0; i < attributes.size(); i++)
+    for (size_t i = 0; i < attributes.size(); i++)
         glBindAttribLocation(program_id_, i, attributes[i].data());
     gl_error_check();
     // link program after binding attribute locations

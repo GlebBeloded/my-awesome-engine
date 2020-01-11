@@ -10,11 +10,11 @@ enum class color { red = 0, blue, green, purple, gray };
 enum class piece_types { I, J, L, O, S, T, Z };
 
 constexpr static std::array<eng::rgb, 5> colors{
-    { { 240.f / 255.f, 128.f / 255.f, 128.f / 255.f },
+    { { 240.f / 255.f, 64.f / 255.f, 64.f / 255.f },
       { 100.f / 255.f, 149.f / 255.f, 237.f / 255.f },
       { 60.f / 255.f, 179.f / 255.f, 113.f / 255.f },
       { 186.f / 255.f, 85.f / 255.f, 211.f / 255.f },
-      { 216.f / 255.f, 191.f / 255.f, 216.f / 255.f } }
+      { 255.f / 255.f, 235.f / 255.f, 205.f / 255.f } }
 };
 
 // make all of these calculatable at compile time

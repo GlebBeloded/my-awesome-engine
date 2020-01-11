@@ -8,10 +8,7 @@ struct vector {
     float x = 0;
     float y = 0;
     float z = 0;
-    constexpr vector() {
-        x, y = 0;
-        z = 0;
-    }
+    constexpr vector() {}
     constexpr vector(float _x, float _y)
         : x{ _x }
         , y{ _y } {}

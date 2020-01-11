@@ -382,7 +382,7 @@ void sdl_engine::init_SDL() {
         throw std::runtime_error("Failed to init SDL");
     }
 
-    window = SDL_CreateWindow("OpenGL", SDL_WINDOWPOS_CENTERED,
+    window = SDL_CreateWindow("Tetris", SDL_WINDOWPOS_CENTERED,
                               SDL_WINDOWPOS_CENTERED, 300, 600,
                               SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 
@@ -479,9 +479,6 @@ sdl_engine::sdl_engine(const std::filesystem::path& game_path) {
 }
 
 sdl_engine::~sdl_engine() {
-    if (this == nullptr) {
-        throw std::runtime_error("engine is a nullpointer");
-    }
     SDL_GL_DeleteContext(gl_context);
 }
 
