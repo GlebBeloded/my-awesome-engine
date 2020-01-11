@@ -38,12 +38,24 @@ void tetris::game::render_grid() {
 }
 
 void tetris::game::render_board() {
-    for (auto tile : field)
-        if (tile != nullptr)
-            tile->render(engine);
-    if (this->current_piece != nullptr)
+    // init renderer
+    if (rstate.rows_destroyed > 0) {
+        if (!rstate.initialized) {
+            rstate.initialize(engine->time_from_init(),
+                              engine->time_from_init() + step_time);
+        }
+        if (current_piece)
+            current_piece->render(engine);
+    }
+    // if rendereded, reset
+    if (rstate.rows_destroyed > 0 && rstate.finished)
+        rstate.reset();
+    // render piece
+    if (current_piece)
         current_piece->render(engine);
-
+    // render board
+    rstate.render(engine, engine->time_from_init());
+    engine->swap_buffers();
     // render_grid();
 }
 
@@ -53,8 +65,7 @@ tetris::piece* tetris::game::generate_piece() {
 
     auto   col = static_cast<color>(color_distribution(random_engine));
     piece* ptr;
-    ptr = new O{};
-    return ptr;
+
     switch (type) {
         case piece_types::O:
             ptr = new O{};
@@ -149,31 +160,15 @@ void tetris::game::play() {
                     current_piece->move(eng::event::s_pressed);
             }
         }
+        // clear bord if any row is full
         clear(0);
-
-        // init renderer
-        if (rstate.rows_destroyed > 0) {
-            if (!rstate.initialized) {
-                rstate.initialize(engine->time_from_init(),
-                                  engine->time_from_init() + step_time);
-            }
-            if (current_piece)
-                current_piece->render(engine);
-        }
-        // if rendereded, reset
-        if (rstate.rows_destroyed > 0 && rstate.finished)
-            rstate.reset();
-        // render piece
-        if (current_piece)
-            current_piece->render(engine);
-        // render board
-        rstate.render(engine, engine->time_from_init());
+        render_board();
 
         score.update();
-        step_time = 1.0 - (0.1 * score.level) - 0.1;
-        // render_board();
-        engine->swap_buffers();
+        step_time = 0.8 - (0.1 * score.level) - 0.1;
     }
+    std::cout << "score: " << score.score << '\n'
+              << "level: " << score.level << '\n';
 }
 
 void tetris::game::round() {
@@ -283,6 +278,6 @@ void tetris::game_logic::update() {
     lines_cleared_total += lines_cleared;
     if (lines_cleared >= 5) {
         level++;
-        lines_cleared %= 5;
+        lines_cleared = 0;
     }
 }
