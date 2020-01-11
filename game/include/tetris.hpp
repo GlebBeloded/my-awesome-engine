@@ -5,11 +5,22 @@
 
 namespace tetris {
 
+struct game_logic {
+    int  score{ 0 };
+    int  lines_cleared{ 0 };
+    int  lines_cleared_total{ 0 };
+    int  level{ 1 };
+    void update();
+};
+
 struct render_state {
-    float               begin_time{ 0 };
+    float               d_phase_begin_time{ 0 };
+    float               d_phase_end_time{ 0 };
     float               end_time{ 0 };
     bool                initialized{ false };
     bool                finished{ false };
+    bool                destruction_phase{ false };
+    bool                displacement_phase{ false };
     std::map<int, tile> full_state; // to do animation we just copy given tile
                                     // and substract rows_destroyed y value
                                     // we need threshold value to not
@@ -20,12 +31,17 @@ struct render_state {
         state::board_size.first * (state::board_size.second + 5)
     }; // interpolate everything above given value (boardsize by default)
 
-    std::map<int, bool> rows_to_delete{};
+    std::map<int, bool> tiles_to_delete{};
+
+    // used as adapter between actual and rendering state
+    int adjustment{ 0 };
 
     void render(eng::engine*, float time);
     void initialize(float b, float e);
     void reset();
 };
+
+int get_field_index(int x, int y);
 
 class game {
 public:
@@ -61,6 +77,7 @@ private:
     float        step_time{ 1.0 };
     render_state rstate{};
     int          rows_destroyed{ 0 };
+    game_logic   score{};
 };
 
 std::vector<tile> lerp(const std::vector<tile>& a, const std::vector<tile>& b,

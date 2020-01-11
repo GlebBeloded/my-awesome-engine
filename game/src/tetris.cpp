@@ -3,73 +3,7 @@
 #include "state.hpp"
 #include "types.hpp"
 #include <random>
-
-float normalize(const float& min, const float& max,
-                const float& current_value) {
-    return (current_value - min) / (max - min);
-}
-
-int get_field_index(int x, int y) {
-    return x + (y * state::board_size.first);
-}
-
-void tetris::render_state::render(eng::engine* e, float time) {
-    float alpha = normalize(begin_time, end_time, time);
-    if (alpha > 1.0) {
-        alpha    = 1.0;
-        finished = true;
-    }
-    for (const auto& [key, value] : full_state) {
-
-        if (rows_to_delete[key])
-            continue;
-        if (key < threshhold_value)
-            value.render(e);
-        if (key >= threshhold_value) {
-            auto moved{ value };
-            moved.move_to_coords(value.coords.first,
-                                 value.coords.second - rows_destroyed);
-            lerp(value, moved, alpha).render(e);
-        }
-    }
-}
-
-void tetris::render_state::initialize(float b, float e) {
-    if (initialized == true)
-        throw std::logic_error("render process already taking place");
-    begin_time  = b;
-    end_time    = e;
-    initialized = true;
-    finished    = false;
-}
-
-void tetris::render_state::reset() {
-    initialized = false;
-    for (const auto& [key, val] : rows_to_delete) {
-        if (val)
-            full_state.erase(key);
-    }
-    // move all tyles n rows lower
-    std::vector<int> invalid_indexes;
-    for (auto& [key, value] : full_state) {
-        if (key >= threshhold_value) {
-            value.move_to_coords(value.coords.first,
-                                 value.coords.second - rows_destroyed);
-            full_state[get_field_index(value.coords.first,
-                                       value.coords.second)] = value;
-            invalid_indexes.push_back(key);
-        }
-    }
-    // for (const auto& index : invalid_indexes) {
-    // full_state.erase(index);
-    // }
-
-    threshhold_value = state::board_size.first * (state::board_size.second + 5);
-    finished         = false;
-    rows_destroyed   = 0;
-
-    rows_to_delete.clear();
-}
+#include <set>
 
 tetris::game::game(std::random_device& seed, eng::engine* e)
     : random_engine{ seed() }
@@ -119,7 +53,8 @@ tetris::piece* tetris::game::generate_piece() {
 
     auto   col = static_cast<color>(color_distribution(random_engine));
     piece* ptr;
-
+    ptr = new O{};
+    return ptr;
     switch (type) {
         case piece_types::O:
             ptr = new O{};
@@ -216,23 +151,27 @@ void tetris::game::play() {
         }
         clear(0);
 
-        // NEW RENDERER(with bugs)
-        // if (rstate.rows_destroyed > 0) {
-        //     if (!rstate.initialized) {
-        //         rstate.initialize(engine->time_from_init(),
-        //                           engine->time_from_init() + step_time);
-        //         rstate.render(engine, engine->time_from_init());
-        //     }
-        //     if (current_piece)
-        //         current_piece->render(engine);
-        // }
-        // if (rstate.rows_destroyed > 0 && rstate.finished)
-        //     rstate.reset();
+        // init renderer
+        if (rstate.rows_destroyed > 0) {
+            if (!rstate.initialized) {
+                rstate.initialize(engine->time_from_init(),
+                                  engine->time_from_init() + step_time);
+            }
+            if (current_piece)
+                current_piece->render(engine);
+        }
+        // if rendereded, reset
+        if (rstate.rows_destroyed > 0 && rstate.finished)
+            rstate.reset();
+        // render piece
+        if (current_piece)
+            current_piece->render(engine);
+        // render board
+        rstate.render(engine, engine->time_from_init());
 
-        // if (current_piece)
-        //     current_piece->render(engine);
-        // rstate.render(engine, engine->time_from_init());
-        render_board();
+        score.update();
+        step_time = 1.0 - (0.1 * score.level) - 0.1;
+        // render_board();
         engine->swap_buffers();
     }
 }
@@ -299,10 +238,13 @@ void tetris::game::clear_row(int row) {
     // increment -y displacement to render
     rstate.rows_destroyed++;
     for (int x = 0; x < state::board_size.first; x++) {
-        rstate.rows_to_delete[get_field_index(x, row)] = true;
+        rstate.tiles_to_delete[get_field_index(x, row + rstate.adjustment)] =
+            true;
         delete (field.at(x + (state::board_size.first * row)));
         field.at(x + (state::board_size.first * row)) = nullptr;
     }
+    rstate.adjustment++;
+    score.lines_cleared++;
 }
 
 // recursive
@@ -334,17 +276,13 @@ bool tetris::game::movable(tetris::piece*&            piece,
     return true;
 }
 
-namespace tetris {
-std::vector<tile> lerp(const std::vector<tile>& a, const std::vector<tile>& b,
-                       float alpha) {
-    if (a.size() != b.size()) {
-        throw std::logic_error("cannot interpolate uneven number of objects");
+void tetris::game_logic::update() {
+    if (lines_cleared == 0)
+        return;
+    score += (40 * lines_cleared) * lines_cleared;
+    lines_cleared_total += lines_cleared;
+    if (lines_cleared >= 5) {
+        level++;
+        lines_cleared %= 5;
     }
-    std::vector<tile> result(a.size());
-    for (auto i = 0; i < a.size(); i++) {
-        result[i] = lerp(a[i], b[i], alpha);
-    }
-    return result;
 }
-
-} // namespace tetris
