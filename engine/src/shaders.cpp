@@ -1,4 +1,6 @@
 
+#include "shaders.hpp"
+#include "engine.hpp"
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -9,16 +11,13 @@
 #include <stdexcept>
 #include <vector>
 
-#include "shaders.hpp"
-
-GLuint comiple_vertex_shader(std::ifstream& shader) {
+GLuint comiple_vertex_shader(std::string_view& shader) {
     GLuint vert_shader = glCreateShader(GL_VERTEX_SHADER);
     gl_error_check();
 
-    std::string file{ std::istreambuf_iterator<char>(shader),
-                      std::istreambuf_iterator<char>() };
+    auto file = eng::load_file(shader);
 
-    const char* source = file.data();
+    const char* source = file.begin();
     glShaderSource(vert_shader, 1, &source, nullptr);
     gl_error_check();
 
@@ -30,14 +29,14 @@ GLuint comiple_vertex_shader(std::ifstream& shader) {
     return vert_shader;
 }
 
-GLuint comiple_fragment_shader(std::ifstream& shader) {
+GLuint comiple_fragment_shader(std::string_view& shader) {
 
     GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
     gl_error_check();
 
-    std::string file{ std::istreambuf_iterator<char>(shader),
-                      std::istreambuf_iterator<char>() };
-    const char* source = file.data();
+    auto file = eng::load_file(shader);
+
+    const char* source = file.begin();
 
     glShaderSource(fragment_shader, 1, &source, nullptr);
     gl_error_check();
@@ -68,24 +67,15 @@ void check_compile_status(GLuint shader, const char* type) {
         std::string error_message{ "Error compiling " };
         error_message += type;
         error_message += " shader \n";
-
         throw std::runtime_error(error_message);
     }
 }
 
-GLuint create_shader_program(std::filesystem::path                vertex,
-                             std::filesystem::path                fragment,
+GLuint create_shader_program(std::string_view vertex, std::string_view fragment,
                              const std::vector<std::string_view>& attributes) {
-    std::ifstream file{};
-    file.exceptions(std::ios_base::failbit);
 
-    file.open(vertex.c_str());
-    auto vert_shader = comiple_vertex_shader(file);
-    file.close();
-
-    file.open(fragment.c_str());
-    auto fragment_shader = comiple_fragment_shader(file);
-    file.close();
+    auto vert_shader     = comiple_vertex_shader(vertex);
+    auto fragment_shader = comiple_fragment_shader(fragment);
 
     auto program_id_ = glCreateProgram();
     gl_error_check();

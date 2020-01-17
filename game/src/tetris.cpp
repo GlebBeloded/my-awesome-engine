@@ -1,5 +1,12 @@
 #include "tetris.hpp"
+#ifdef __ANDROID__
+#include <GLES2/gl2.h>
+#include <android/log.h>
+#define GL_GLES_PROTOTYPES 1
+#define glActiveTexture_ glActiveTexture
+#else
 #include "glad.h"
+#endif
 #include "pieces.hpp"
 #include "state.hpp"
 #include "types.hpp"
@@ -7,22 +14,54 @@
 #include <set>
 
 tetris::game::game(std::random_device& seed, eng::engine* e,
-                   const std::filesystem::path& path)
+                   const std::string_view& _path)
     : random_engine{ seed() }
     , engine{ e } {
 
-    e->load_texture((path / "textures" / "square.png").string(), 256, 256, 4,
-                    GL_LUMINANCE);
-    sounds["rotate"].reset(
-        e->create_sound_buffer((path / "sounds" / "whoosh.wav").string()));
-    sounds["start"].reset(
-        e->create_sound_buffer((path / "sounds" / "start.wav").string()));
-    sounds["move"].reset(
-        e->create_sound_buffer((path / "sounds" / "move.wav").string()));
-    sounds["clear"].reset(
-        e->create_sound_buffer((path / "sounds" / "clear_row.wav").string()));
-    sounds["automove"].reset(
-        e->create_sound_buffer((path / "sounds" / "auto_move.wav").string()));
+    const std::string path{ _path };
+
+    std::string square{ path };
+    square.append("textures/square.png");
+#ifdef __ANDROID__
+    square = "square.png";
+#endif
+    e->load_texture(square, 256, 256, 4, GL_LUMINANCE);
+
+    std::string whoosh{ path.data() };
+    whoosh.append("sounds/whoosh.wav");
+#ifdef __ANDROID__
+    whoosh = "whoosh.wav";
+#endif
+    sounds["rotate"].reset(e->create_sound_buffer(whoosh.data()));
+
+    std::string start{ path.data() };
+    start.append("sounds/start.wav");
+#ifdef __ANDROID__
+    start = "start.wav";
+#endif
+    sounds["start"].reset(e->create_sound_buffer(start.data()));
+
+    std::string move{ path.data() };
+    move.append("sounds/move.wav");
+#ifdef __ANDROID__
+    move = "move.wav";
+#endif
+    sounds["move"].reset(e->create_sound_buffer(move.data()));
+
+    std::string clear_row{ path.data() };
+    clear_row.append("sounds/clear_row.wav");
+#ifdef __ANDROID__
+    clear_row = "clear_row.wav";
+#endif
+    sounds["clear"].reset(e->create_sound_buffer(clear_row.data()));
+
+    std::string auto_move{ path.data() };
+    auto_move.append("sounds/auto_move.wav");
+#ifdef __ANDROID__
+    auto_move = "auto_move.wav";
+#endif
+
+    sounds["automove"].reset(e->create_sound_buffer((auto_move.data())));
 }
 
 void tetris::game::render_grid() {

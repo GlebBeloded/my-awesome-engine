@@ -1,0 +1,111 @@
+def buildAsLibrary = project.hasProperty('BUILD_AS_LIBRARY');
+def buildAsApplication = !buildAsLibrary
+if (buildAsApplication) {
+    apply plugin: 'com.android.application'
+}
+else {
+    apply plugin: 'com.android.library'
+}
+
+android {
+    compileSdkVersion 28
+
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+    if (properties.getProperty('sdl2_src.dir') == null)
+    {
+        throw new IllegalArgumentException("error: add sdl2_src.dir in local.properties")
+    }
+
+    if (properties.getProperty('sdl2_build.dir') == null)
+    {
+        throw new IllegalArgumentException("error: add sdl2_build.dir in local.properties")
+    }
+
+    def sdl2SrcDir = properties.getProperty('sdl2_src.dir')
+    def sdl2BuildDir = properties.getProperty('sdl2_build.dir')
+
+    defaultConfig {
+        if (buildAsApplication) {
+            applicationId "org.libsdl.app"
+        }
+        minSdkVersion 21    // 21 - is minimal to work for dlopen with new NDK
+                            // or you have to build SDL-static, SDLmain, and link it into you .SO
+                            // and in SDL_android.c directly call SDL_main without dlopen, dsym, etc
+                            // also replace find_library(ANDROID_DL_LIBRARY dl) with:
+                            // find_library(ANDROID_DL_LIBRARY NAMES libdl.so dl) in
+                            // SDL2/CMakeLists.txt
+                            // or you can use old version NDk18b
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+
+        ndk {
+            // on NDK20b arm64-v8a dlopen failed if minSdkVersion less 21
+            //abiFilters "arm64-v8a"
+            //abiFilters "armeabi-v7a"
+            //abiFilters "x86"
+        }
+
+        externalNativeBuild {
+	        cmake {
+                version "3.16+"  // double check your ENV variable PATH have cmake with correct version
+                                 // or you have to set path to it in local.properties like:
+                                 // # If you set this property, Gradle no longer uses PATH to find CMake.
+                                 // # gradle works only with canonical cmake from cmake.org
+                                 // cmake.dir="path-to-cmake"
+
+
+                // Use the following syntax when passing arguments to variables:
+       	        // arguments "-DVAR_NAME=ARGUMENT".
+                arguments "-DSDL2_SRC_DIR=" + sdl2SrcDir
+                arguments "-DSDL2_BUILD_DIR=" + sdl2BuildDir
+		
+	            // arguments "-DANDROID_ARM_NEON=TRUE",
+      	        // If you're passing multiple arguments to a variable, pass them together:
+	            // arguments "-DVAR_NAME=ARG_1 ARG_2"
+      	        // The following line passes 'rtti' and 'exceptions' to 'ANDROID_CPP_FEATURES'.
+                arguments "-DANDROID_CPP_FEATURES=rtti exceptions",
+	                  "-DANDROID_STL=c++_shared"
+	        }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    if (!project.hasProperty('EXCLUDE_NATIVE_LIBS')) {
+        sourceSets.main {
+            jniLibs.srcDir 'libs'
+        }   
+    }
+
+    externalNativeBuild {
+       cmake {
+           path '../../CMakeLists.txt'
+       }
+    }
+    
+    lintOptions {
+        abortOnError false
+    }
+    
+    if (buildAsLibrary) {
+        libraryVariants.all { variant ->
+            variant.outputs.each { output ->
+                def outputFile = output.outputFile
+                if (outputFile != null && outputFile.name.endsWith(".aar")) {
+                    def fileName = "org.libsdl.app.aar";
+                    output.outputFile = new File(outputFile.parent, fileName);
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+}

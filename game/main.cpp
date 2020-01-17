@@ -5,20 +5,27 @@
 #include <array>
 #include <cmath>
 #include <cstdlib>
-#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <random>
 #include <string_view>
+#ifndef __ANDROID__
+#include <filesystem>
+#endif
+#include <SDL.h>
 
 void render_grid(eng::engine* eng);
 
 int main(int /*argc*/, char* argv[]) {
 
-    auto game_dir = std::filesystem::absolute(argv[0]);
-    game_dir.remove_filename();
-
+#ifdef __ANDROID__
+    std::string game_dir{ argv[0] };
+    game_dir.append("/assets/");
+#else
+    auto full_path = std::filesystem::absolute(argv[0]);
+    auto game_dir  = full_path.remove_filename().c_str();
+#endif
     // create engine
     std::unique_ptr<eng::engine> engine(eng::new_sdl_engine(game_dir));
 

@@ -1,5 +1,5 @@
+#include "matrix.hpp"
 #include "tetris.hpp"
-
 #include <set>
 
 float normalize(const float& min, const float& max,

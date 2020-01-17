@@ -45,7 +45,7 @@ int get_field_index(int x, int y);
 
 class game {
 public:
-    game(std::random_device&, eng::engine*, const std::filesystem::path&);
+    game(std::random_device&, eng::engine*, const std::string_view&);
     void play();
 
 private:
@@ -76,8 +76,7 @@ private:
     bool                                                      lost{ false };
     float                                                     step_time{ 1.0 };
     render_state                                              rstate{};
-    int        rows_destroyed{ 0 };
-    game_logic score{};
+    game_logic                                                score{};
 };
 
 std::vector<tile> lerp(const std::vector<tile>& a, const std::vector<tile>& b,

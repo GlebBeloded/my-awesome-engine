@@ -4,7 +4,14 @@
 #include "engine.hpp"
 #include "shaders.hpp"
 
+#ifdef __ANDROID__
+#include <GLES2/gl2.h>
+#include <android/log.h>
+#define GL_GLES_PROTOTYPES 1
+#define glActiveTexture_ glActiveTexture
+#else
 #include "glad.h"
+#endif
 #include <SDL.h>
 #include <algorithm>
 #include <array>
@@ -52,6 +59,32 @@ void gl_error_check() {
     }
 }
 namespace eng {
+
+membuf load_file(std::string_view path) {
+    SDL_RWops* io = SDL_RWFromFile(path.data(), "rb");
+    if (nullptr == io) {
+        throw std::runtime_error("can't load file: " + std::string(path));
+    }
+
+    Sint64 file_size = io->size(io);
+    if (-1 == file_size) {
+        throw std::runtime_error("can't determine size of file: " +
+                                 std::string(path));
+    }
+    size_t                  size = static_cast<size_t>(file_size);
+    std::unique_ptr<char[]> mem  = std::make_unique<char[]>(size);
+
+    size_t num_readed_objects = io->read(io, mem.get(), size, 1);
+    if (num_readed_objects != 1) {
+        throw std::runtime_error("can't read all content from file: " +
+                                 std::string(path));
+    }
+
+    if (0 != io->close(io)) {
+        throw std::runtime_error("failed close file: " + std::string(path));
+    }
+    return membuf(std::move(mem), size);
+}
 
 static std::string_view get_sound_format_name(uint16_t format_value) {
     static const std::map<int, std::string_view> format = {
@@ -150,14 +183,14 @@ struct binding {
     event            event_released;
 };
 
-constexpr std::array<binding, 5> keys{
+constexpr std::array<binding, 7> keys{
     { { SDLK_w, "up", event::w_pressed, event::w_released },
       { SDLK_a, "left", event::a_pressed, event::a_released },
       { SDLK_s, "down", event::s_pressed, event::s_released },
       { SDLK_d, "right", event::d_pressed, event::d_released },
-      { SDLK_ESCAPE, "escape", event::esc_pressed, event::esc_released }
-
-    }
+      { SDLK_ESCAPE, "escape", event::esc_pressed, event::esc_released },
+      { SDL_FINGERDOWN, "finger_down", event::finger_down, event::finger_down },
+      { SDL_FINGERUP, "finger_up", event::finger_up, event::finger_up } }
 };
 
 static bool check_input(const SDL_Event& e, const binding*& result) {
@@ -277,7 +310,7 @@ sound_buffer_impl::~sound_buffer_impl() {
 
 class sdl_engine final : public engine {
 public:
-    sdl_engine(const std::filesystem::path& game_path);
+    sdl_engine(const std::string_view& assets_path);
     virtual ~sdl_engine();
     bool  read_input(event& e) final;
     void  render_line(const line& l) override;
@@ -287,8 +320,8 @@ public:
     uint  load_texture(std::string_view path, int width, int height,
                        int nrChannels, int texture_mode) override;
 
-    virtual sound_buffer*           create_sound_buffer(std::string_view path);
-    virtual void                    destroy_sound_buffer(sound_buffer*);
+    virtual sound_buffer* create_sound_buffer(std::string_view path) override;
+    virtual void          destroy_sound_buffer(sound_buffer*) override;
     std::vector<sound_buffer_impl*> sounds;
 
 private:
@@ -305,8 +338,8 @@ private:
     SDL_AudioSpec     audio_device_spec;
 };
 
-engine* new_sdl_engine(const std::filesystem::path& game_path) {
-    return new sdl_engine(game_path);
+engine* new_sdl_engine(const std::string_view& assets_path) {
+    return new sdl_engine(assets_path);
 }
 
 void sdl_engine::init_SDL_audio() {
@@ -426,7 +459,7 @@ void sdl_engine::init_SDL() {
     }
 }
 
-sdl_engine::sdl_engine(const std::filesystem::path& game_path) {
+sdl_engine::sdl_engine(const std::string_view& assets_path) {
     using namespace std;
 
     // Create SDL window with opengl context
@@ -434,20 +467,32 @@ sdl_engine::sdl_engine(const std::filesystem::path& game_path) {
 
     init_SDL_audio();
 
+#ifndef __ANDROID__
     // Get opengl functions from GLAD
     if (gladLoadGLES2Loader(SDL_GL_GetProcAddress) == 0) {
         throw std::logic_error("error: failed to initialize glad");
     }
+#endif
+
     // create vertex and fragment shader for drawning triangles
     const std::vector<std::string_view> triangle_attributes{ "a_position",
                                                              "a_color",
                                                              "a_tex_coord" };
 
-    auto shaders_dir{ game_path / "shaders" };
+    std::string shaders_dir{ assets_path.data() };
+    shaders_dir.append("shaders/");
+    std::string vertex_shader{ shaders_dir };
+    vertex_shader.append("triangle.vert");
+    std::string fragment_shader{ shaders_dir };
+    fragment_shader.append("triangle.frag");
 
-    shaders["triangle"] = create_shader_program(shaders_dir / "triangle.vert",
-                                                shaders_dir / "triangle.frag",
-                                                triangle_attributes);
+#ifdef __ANDROID__
+    vertex_shader   = "triangle.vert";
+    fragment_shader = "triangle.frag";
+#endif
+
+    shaders["triangle"] = create_shader_program(
+        vertex_shader.data(), fragment_shader.data(), triangle_attributes);
 
     gl_error_check();
     if (0 == shaders["triangle"]) {
@@ -455,20 +500,6 @@ sdl_engine::sdl_engine(const std::filesystem::path& game_path) {
     }
 
     glValidateProgram(shaders["triangle"]);
-    gl_error_check();
-
-    // create vertex and fragment shader for drawning lines
-    const std::vector<std::string_view> line_attributes{ "a_position" };
-
-    shaders["line"] = create_shader_program(
-        shaders_dir / "line.vert", shaders_dir / "line.frag", line_attributes);
-
-    gl_error_check();
-    if (0 == shaders["line"]) {
-        throw std::runtime_error("failed to create gl program");
-    }
-
-    glValidateProgram(shaders["line"]);
     gl_error_check();
 
     stbi_set_flip_vertically_on_load(true);
@@ -507,7 +538,7 @@ bool sdl_engine::read_input(event& e) {
         }
     }
     return false;
-}
+} // namespace eng
 
 void sdl_engine::render_triangle(const triangle& t) {
     auto program_id = shaders["triangle"];
@@ -623,8 +654,17 @@ float sdl_engine::time_from_init() {
 
 uint sdl_engine::load_texture(std::string_view path, int width, int height,
                               int nrChannels, int texture_mode) {
-    unsigned char* data =
-        stbi_load(path.data(), &width, &height, &nrChannels, 0);
+
+    auto texture_file = load_file(path);
+
+    stbi_uc* data = nullptr;
+
+    data = stbi_load_from_memory(
+        reinterpret_cast<unsigned char*>(texture_file.begin()),
+        texture_file.size(), &width, &height, &nrChannels, 0);
+    if (data == nullptr) {
+        throw std::runtime_error("error reading texture");
+    }
 
     GLuint texture;
     glGenTextures(1, &texture);
@@ -633,7 +673,7 @@ uint sdl_engine::load_texture(std::string_view path, int width, int height,
     glBindTexture(GL_TEXTURE_2D, texture);
     gl_error_check();
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, texture_mode,
+    glTexImage2D(GL_TEXTURE_2D, 0, texture_mode, width, height, 0, texture_mode,
                  GL_UNSIGNED_BYTE, data);
     gl_error_check();
 

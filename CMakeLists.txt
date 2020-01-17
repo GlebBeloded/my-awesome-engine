@@ -1,16 +1,25 @@
 cmake_minimum_required(VERSION 3.14)
 
+if(SDL2_SRC_DIR)
+add_subdirectory( # Specifies the directory of the CMakeLists.txt file.
+                  ${SDL2_SRC_DIR}
+                  # Specifies the directory for the build outputs.
+                  ${SDL2_BUILD_DIR}_${ANDROID_ABI} )  
+endif()
+
+
+
 add_library(matrix SHARED ${CMAKE_CURRENT_LIST_DIR}/matrix/src/matrix.cpp)
 
 target_include_directories(matrix PUBLIC ${CMAKE_CURRENT_LIST_DIR}/matrix/include/)
 target_compile_features(matrix PUBLIC cxx_std_17)
 
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -Wall -Wextra -pedantic -Werror")
-endif()
+#if(MSVC)
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+#else()
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -Wall -Wextra -pedantic -Werror")
+#endif()
 
 add_library(openGL SHARED ${CMAKE_CURRENT_LIST_DIR}/openGL/src/glad.c)
 
@@ -28,17 +37,30 @@ target_include_directories(engine PUBLIC ${CMAKE_CURRENT_LIST_DIR}/engine/includ
 
 target_compile_features(engine PUBLIC cxx_std_17)
 
-find_package(sdl2)
-if(NOT sdl2_FOUND)
-    find_package(GetSDL2)
+if(NOT SDL2_SRC_DIR)
+  find_package(sdl2)
+  if(NOT sdl2_FOUND)
+      find_package(GetSDL2)
+  endif()
 endif()
 
-target_include_directories(engine PUBLIC ${SDL2_INCLUDE_DIRS})
-
+if(NOT SDL2_SRC_DIR)
+  target_include_directories(engine PUBLIC ${SDL2_INCLUDE_DIRS})
+else()
+  target_include_directories(engine PUBLIC ${SDL2_SRC_DIR}/include)
+endif()
 
 target_link_libraries(engine PUBLIC matrix)
-target_link_libraries(engine PUBLIC ${SDL2_LIBRARIES})
-target_link_libraries(engine PUBLIC openGL -lGL)
+if(SDL2_SRC_DIR)
+  target_link_libraries(engine PRIVATE SDL2 SDL2main OpenSLES)
+else()
+  target_link_libraries(engine PUBLIC ${SDL2_LIBRARIES})
+endif()
+if(SDL2_SRC_DIR)
+  #target_link_libraries(engine PUBLIC openGL)
+else()
+  target_link_libraries(engine PUBLIC openGL -lGL)
+endif()
 
 add_library(tetris SHARED ${CMAKE_CURRENT_LIST_DIR}/game/src/types.cpp 
                           ${CMAKE_CURRENT_LIST_DIR}/game/src/O.cpp
@@ -57,13 +79,19 @@ target_include_directories(tetris PUBLIC ${CMAKE_CURRENT_LIST_DIR}/engine/includ
                                           ${CMAKE_CURRENT_LIST_DIR}/openGL/include/)
 
 
+target_link_libraries(tetris PUBLIC engine matrix)
+
 target_compile_features(tetris PUBLIC cxx_std_17)
 
-
-add_executable(game ${CMAKE_CURRENT_LIST_DIR}/game/main.cpp)
+if(SDL2_SRC_DIR)
+  add_library(game SHARED ${CMAKE_CURRENT_LIST_DIR}/game/main.cpp)
+else()
+  add_executable(game ${CMAKE_CURRENT_LIST_DIR}/game/main.cpp)
+endif()
 target_compile_features(game PUBLIC cxx_std_17)
 target_include_directories(game PUBLIC ${CMAKE_CURRENT_LIST_DIR}/engine/include/
-                                        ${CMAKE_CURRENT_LIST_DIR}/game/include/)
+                                        ${CMAKE_CURRENT_LIST_DIR}/game/include/
+                                        ${CMAKE_CURRENT_LIST_DIR}/matrix/include)
 target_link_libraries(game PUBLIC engine tetris)
 
 install(TARGETS matrix openGL engine game tetris)
