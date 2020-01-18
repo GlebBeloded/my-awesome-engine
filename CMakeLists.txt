@@ -71,6 +71,7 @@ add_library(tetris SHARED ${CMAKE_CURRENT_LIST_DIR}/game/src/types.cpp
                           ${CMAKE_CURRENT_LIST_DIR}/game/src/S.cpp
                           ${CMAKE_CURRENT_LIST_DIR}/game/src/Z.cpp  
                           ${CMAKE_CURRENT_LIST_DIR}/game/src/tetris.cpp
+                          ${CMAKE_CURRENT_LIST_DIR}/game/src/input.cpp
                           ${CMAKE_CURRENT_LIST_DIR}/game/src/rendering.cpp)
 
 target_include_directories(tetris PUBLIC ${CMAKE_CURRENT_LIST_DIR}/engine/include/ 

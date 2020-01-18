@@ -3,6 +3,7 @@
 #include "matrix.hpp"
 #include <iosfwd>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -17,9 +18,17 @@ enum class event {
     a_released,
     s_released,
     d_released,
-    esc_released,
-    finger_down,
-    finger_up
+    esc_released
+};
+
+enum class event_type { key, touch };
+enum class touch { finger_up, finger_down };
+
+struct input_data {
+    event_type                             eventType;
+    std::optional<event>                   key_event{};
+    std::optional<touch>                   touch_event{};
+    std::optional<std::pair<float, float>> f_coord{};
 };
 
 struct rgb {
@@ -61,11 +70,15 @@ public:
     virtual void play(const properties) = 0;
 };
 
+// type[touch,key] handle event
+// if key
+// if touch
+// we need to lock
 class engine {
 public:
     /// pool event from input queue
     /// return true if more events in queue
-    virtual bool  read_input(event& e)                           = 0;
+    virtual bool  read_input(input_data&)                        = 0;
     virtual void  render_triangle(const triangle&)               = 0;
     virtual void  render_line(const line& l)                     = 0;
     virtual void  swap_buffers()                                 = 0;

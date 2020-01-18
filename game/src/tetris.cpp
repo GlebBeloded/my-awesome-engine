@@ -164,60 +164,8 @@ void tetris::game::play() {
     auto time = engine->time_from_init();
     sounds["start"]->play(eng::sound_buffer::properties::once);
     while (!lost) {
-        eng::event event;
-        while (engine->read_input(event)) {
-            switch (event) {
-                case eng::event::esc_pressed:
-                    lost = true;
-                    break;
-                case eng::event::w_pressed:
-                    if (current_piece) {
-                        auto tiles{ current_piece->coords_after_rotation() };
-                        for (const auto& tile : tiles) {
-                            if (!within_filed(tile.first, tile.second))
-                                goto exit;
-                            if (get_tile(tile.first, tile.second) != nullptr)
-                                goto exit;
-                        }
-                        sounds["rotate"]->play(
-                            eng::sound_buffer::properties::once);
-                        current_piece->rotate();
-                    }
-                    break;
-                case eng::event::s_pressed:
-                    if (current_piece) {
-                        if (movable(current_piece, { 0, -1 })) {
-                            current_piece->move(event);
-                            // sounds["move"]->play(
-                            //     eng::sound_buffer::properties::once);
-                        }
-                    }
-                    break;
-                case eng::event::d_pressed:
-                    if (current_piece) {
-                        if (current_piece) {
-                            if (movable(current_piece, { 1, 0 })) {
-                                current_piece->move(event);
-                                // sounds["move"]->play(
-                                //     eng::sound_buffer::properties::once);
-                            }
-                        }
-                        break;
-                        case eng::event::a_pressed:
-                            if (current_piece) {
-                                if (movable(current_piece, { -1, 0 })) {
-                                    current_piece->move(event);
-                                    // sounds["move"]->play(
-                                    // eng::sound_buffer::properties::once);
-                                }
-                            }
-                            break;
-                    }
-                default:
-                exit:
-                    break;
-            }
-        }
+        handle_input();
+
         if (time + step_time < engine->time_from_init()) {
             time = engine->time_from_init();
             round();

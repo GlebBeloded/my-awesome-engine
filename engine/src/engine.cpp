@@ -183,14 +183,12 @@ struct binding {
     event            event_released;
 };
 
-constexpr std::array<binding, 7> keys{
+constexpr std::array<binding, 5> keys{
     { { SDLK_w, "up", event::w_pressed, event::w_released },
       { SDLK_a, "left", event::a_pressed, event::a_released },
       { SDLK_s, "down", event::s_pressed, event::s_released },
       { SDLK_d, "right", event::d_pressed, event::d_released },
-      { SDLK_ESCAPE, "escape", event::esc_pressed, event::esc_released },
-      { SDL_FINGERDOWN, "finger_down", event::finger_down, event::finger_down },
-      { SDL_FINGERUP, "finger_up", event::finger_up, event::finger_up } }
+      { SDLK_ESCAPE, "escape", event::esc_pressed, event::esc_released } }
 };
 
 static bool check_input(const SDL_Event& e, const binding*& result) {
@@ -312,7 +310,7 @@ class sdl_engine final : public engine {
 public:
     sdl_engine(const std::string_view& assets_path);
     virtual ~sdl_engine();
-    bool  read_input(event& e) final;
+    bool  read_input(input_data&) final;
     void  render_line(const line& l) override;
     void  render_triangle(const triangle& t) override;
     void  swap_buffers() override;
@@ -515,30 +513,49 @@ sdl_engine::~sdl_engine() {
 
 /// pool event from input queue
 /// return true if more events in queue
-bool sdl_engine::read_input(event& e) {
+bool sdl_engine::read_input(input_data& input) {
     using namespace std;
     // collect all events from SDL
     SDL_Event sdl_event;
+
     if (SDL_PollEvent(&sdl_event)) {
         const binding* binding = nullptr;
 
         if (sdl_event.type == SDL_QUIT) {
-            e = event::esc_pressed;
+            input.eventType = event_type::key;
+            input.key_event.emplace(event::esc_pressed);
             return true;
         } else if (sdl_event.type == SDL_KEYDOWN) {
             if (check_input(sdl_event, binding)) {
-                e = binding->event_pressed;
+                input.eventType = event_type::key;
+                input.key_event.emplace(binding->event_pressed);
                 return true;
             }
         } else if (sdl_event.type == SDL_KEYUP) {
             if (check_input(sdl_event, binding)) {
-                e = binding->event_released;
+                input.eventType = event_type::key;
+                input.key_event.emplace(binding->event_released);
                 return true;
             }
         }
+        if (sdl_event.type == SDL_FINGERDOWN) {
+            input.eventType = event_type::touch;
+            input.touch_event.emplace(touch::finger_down);
+            input.f_coord.emplace(std::pair<float, float>{
+                sdl_event.tfinger.x, sdl_event.tfinger.y });
+            return true;
+        }
+        if (sdl_event.type == SDL_FINGERUP) {
+            input.eventType = event_type::touch;
+            input.touch_event.emplace(touch::finger_up);
+            input.f_coord.emplace(std::pair<float, float>{
+                sdl_event.tfinger.x, sdl_event.tfinger.y });
+            return true;
+        }
     }
+
     return false;
-} // namespace eng
+}
 
 void sdl_engine::render_triangle(const triangle& t) {
     auto program_id = shaders["triangle"];

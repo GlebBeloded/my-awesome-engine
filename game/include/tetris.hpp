@@ -5,6 +5,8 @@
 
 namespace tetris {
 
+enum class directions { rotate, down, left, right, _plug };
+
 struct game_logic {
     int  score{ 0 };
     int  lines_cleared{ 0 };
@@ -63,10 +65,18 @@ private:
     std::mt19937 random_engine;
     eng::engine* engine;
     void         shift_down(int bottom_row);
-    void         clear(int row);
-    void         clear_row(int row);
-    bool         is_full(int row);
-    piece*       current_piece{ nullptr };
+
+    // input
+    void handle_input();
+    void handle_key(const eng::input_data& input);
+    void handle_touch(const eng::input_data& input);
+    void move_piece(const directions& d);
+    std::optional<std::pair<float, float>> finger_down_pos{};
+
+    void                               clear(int row);
+    void                               clear_row(int row);
+    bool                               is_full(int row);
+    piece*                             current_piece{ nullptr };
     std::uniform_int_distribution<int> pieces_distribution{ 0, 6 };
     std::uniform_int_distribution<int> color_distribution{ 0,
                                                            colors.size() - 1 };
