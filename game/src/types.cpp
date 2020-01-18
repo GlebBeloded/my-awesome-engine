@@ -8,12 +8,12 @@ constexpr auto to_underlying(E e) noexcept {
     return static_cast<std::underlying_type_t<E>>(e);
 }
 
-inline std::pair<float, float> tetris::tile::position() {
+std::pair<float, float> tetris::tile::position() {
     return { (data[1].v[2].coord.x + data[0].v[1].coord.x) / 2.f,
              (data[1].v[2].coord.y + data[0].v[1].coord.y) / 2.f };
 }
 
-inline void tetris::tile::apply_matrix(const matrix::matrix& m) {
+void tetris::tile::apply_matrix(const matrix::matrix& m) {
     for (auto& triangle : data) {
         for (auto& vertex : triangle.v) {
             vertex.coord = vertex.coord * m;
@@ -21,7 +21,7 @@ inline void tetris::tile::apply_matrix(const matrix::matrix& m) {
     }
 }
 
-inline void tetris::tile::set_color(tetris::color col) {
+void tetris::tile::set_color(tetris::color col) {
     color = tetris::colors.at(to_underlying(col));
     for (auto& vertex_array : data) {
         for (auto& vertex : vertex_array.v) {
@@ -30,7 +30,7 @@ inline void tetris::tile::set_color(tetris::color col) {
     }
 }
 
-inline void tetris::tile::init_tex_coord() {
+void tetris::tile::init_tex_coord() {
     data[0].v[0].tx = 0.f;
     data[0].v[0].ty = 1.f;
     data[0].v[1].tx = 1.f;
@@ -46,7 +46,7 @@ inline void tetris::tile::init_tex_coord() {
     data[1].v[2].ty = 0.f;
 }
 
-inline void tetris::tile::normalize() {
+void tetris::tile::normalize() {
     data[0].v[0].coord.x = -0.5;
     data[0].v[0].coord.y = 0.5;
 
